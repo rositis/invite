@@ -139,7 +139,7 @@ function invite_menu($may_cache) {
 *         insert - on successful insert, the user status is set active and the role is escalated
 */
 
-function invite_user($type, &$edit, &$user, $category) {
+function invite_user($type, &$edit, &$user, $category = NULL) {
 
     // What type of registration action are we taking?
     switch ($type) {
