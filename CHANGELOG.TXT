@@ -3,6 +3,7 @@
 Invite 6.x-2.x, xxxx-xx-xx
 --------------------------
 New features:
+- #219266 by jcfiala, wojtha, smk-ka: Port to D6.
 - Added administrator interface showing invite history.
 - Moved the user-specific tracking page to the user profile.
 - #162570: Added a resend button.

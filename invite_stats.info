@@ -1,5 +1,6 @@
 ; $Id$
 name = Invite Statistics
 description = "Displays some statistics about sent invitations."
-dependencies = invite
+dependencies[] = invite
 package = Invite
+core = 6.x
