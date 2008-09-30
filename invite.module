@@ -144,7 +144,7 @@ function invite_menu() {
 
   // Frontend menu items
   $items['invite'] = array(
-    'title' => t('Invite a friend'),
+    'title' => 'Invite a friend',
     'title callback' => 'invite_page_title',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('invite_form', 'page', array()),
