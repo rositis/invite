@@ -2,6 +2,8 @@
 
 Invite 6.x-2.x, xxxx-xx-xx
 --------------------------
+#214426 by barako: Updated French translation.
+
 New features:
 - #219266 by jcfiala, wojtha, smk-ka: Port to D6.
 - Added administrator interface showing invite history.
