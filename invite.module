@@ -173,7 +173,7 @@ function invite_menu() {
 
   // User profile tabs
   $items['user/%user/invites'] = array(
-    'title' => 'Track invitations',
+    'title' => 'Invitations',
     'page callback' => 'invite_user_overview',
     'access callback' => 'invite_access_callback',
     'access arguments' => array('track invitations', 1),
