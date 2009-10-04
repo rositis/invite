@@ -5,6 +5,9 @@ Invite 6.x-2.x, xxxx-xx-xx
 #364971 by jaydub: Fixed administrative overview query for PostgreSQL.
 #322748: Fixed only administrator can send invitations on multilingual
   installation.
+#374869 by webchick, smk-ka: Denying access to the user registration form at
+  the menu callback level, not at the form level, for better compatibility with
+  other modules.
 
 
 Invite 6.x-2.0-ALPHA-1, 2009-04-19
