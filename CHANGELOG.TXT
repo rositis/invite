@@ -3,6 +3,8 @@
 Invite 6.x-2.x, xxxx-xx-xx
 --------------------------
 #364971 by jaydub: Fixed administrative overview query for PostgreSQL.
+#322748: Fixed only administrator can send invitations on multilingual
+  installation.
 
 
 Invite 6.x-2.0-ALPHA-1, 2009-04-19
