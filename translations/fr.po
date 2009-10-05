@@ -533,8 +533,8 @@ msgstr[0] "Le destinataire suivant est déjà un membre :"
 msgstr[1] "Les destinataires suivants sont déjà membres :"
 
 #: invite.module:909
-msgid "You did already invite the following recipient:"
-msgid_plural "You did already invite the following recipients:"
+msgid "You have already invited the following recipient:"
+msgid_plural "You have already invited the following recipients:"
 msgstr[0] "Vous avez déjà invité le destinataire suivant:"
 msgstr[1] "Vous avez déjà invité les destinataire suivanst:"
 

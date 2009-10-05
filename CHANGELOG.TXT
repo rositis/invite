@@ -8,6 +8,7 @@ Invite 6.x-2.x, xxxx-xx-xx
 #374869 by webchick, smk-ka: Denying access to the user registration form at
   the menu callback level, not at the form level, for better compatibility with
   other modules.
+#467486 by neilnz: Grammar fix.
 
 
 Invite 6.x-2.0-ALPHA-1, 2009-04-19
