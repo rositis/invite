@@ -11,6 +11,7 @@ Invite 6.x-2.x, xxxx-xx-xx
 #467486 by neilnz: Grammar fix.
 #633280 by tobiasb: Removed t() in schema definitions.
 #330233 by Bevan, smk-ka: Fixed escalation to target role failed.
+#124906 by tobiasb: Updated and improved German translation.
 
 
 Invite 6.x-2.0-ALPHA-1, 2009-04-19
