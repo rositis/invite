@@ -87,6 +87,7 @@ function invite_theme() {
  */
 function invite_perm() {
   return array(
+    'administer invitations',
     'send invitations',
     'send mass invitations',
     'track invitations',
@@ -114,7 +115,7 @@ function invite_menu() {
   $items['admin/user/invite'] = array(
     'title' => 'Invites',
     'page callback' => 'invite_admin_overview',
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('administer invitations'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'invite_admin.inc',
   );
@@ -127,7 +128,7 @@ function invite_menu() {
     'title' => 'Settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('invite_settings'),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('administer invitations'),
     'type' => MENU_LOCAL_TASK,
     'weight' => 10,
     'file' => 'invite_admin.inc',
@@ -137,7 +138,7 @@ function invite_menu() {
     'title arguments' => array(4),
     'page callback' => 'invite_admin_details',
     'page arguments' => array(4),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('administer invitations'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'invite_admin.inc',
   );
