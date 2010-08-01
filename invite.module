@@ -1262,7 +1262,7 @@ function invite_cancel(&$form_state, $invite) {
   }
   else {
     watchdog('invite', 'Detected malicious attempt to delete an invitation.', array(), WATCHDOG_WARNING, l(t('view'), 'user/'. $user->uid));
-    drupal_access_denied();
+    return drupal_access_denied();
   }
   drupal_goto();
 }
