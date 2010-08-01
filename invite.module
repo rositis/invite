@@ -1107,8 +1107,8 @@ function invite_form_submit($form, &$form_state) {
 
     // Send e-mail.
     $params = array('invite' => $invite);
-    $message = drupal_mail('invite', 'invite', $email, $language, $params, $from, TRUE);
-    if (1 || $message['result']) {
+    $result = drupal_mail('invite', 'invite', $email, $language, $params, $from, TRUE);
+    if ($result['result']) {
       // Save invite.
       invite_save($invite);
 

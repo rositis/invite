@@ -1,5 +1,10 @@
 // $Id$
 
+Invite 6.x-2.x, xxxx-xx-xx
+--------------------------
+#324945 by andypost, Barrett, neilnz: Fixed mass email not possible.
+
+
 Invite 6.x-2.0-BETA1, 2010-08-01
 --------------------------------
 by smk-ka: Fixed invite stats don't display rank.
