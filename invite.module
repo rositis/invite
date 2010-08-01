@@ -325,7 +325,7 @@ function invite_accept($invite) {
 
   if (!$user->uid && invite_validate($invite)) {
     $_SESSION[INVITE_SESSION] = $invite->reg_code;
-    drupal_goto('user/register');
+    drupal_goto(variable_get('invite_registration_path', 'user/register'));
   }
 
   drupal_goto();
