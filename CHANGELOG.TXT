@@ -2,6 +2,7 @@
 
 Invite 6.x-2.x, xxxx-xx-xx
 --------------------------
+#790138 by rjbrown99: Fixed case-insensitive validation of e-mails.
 #651264 by fuerst, ositoblanco: Added configurable path to registration page.
 #695034 by smk-ka: Added a new permission to restrict access to administrative
   pages.
