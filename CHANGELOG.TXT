@@ -3,6 +3,7 @@
 Invite 6.x-2.x, xxxx-xx-xx
 --------------------------
 #870930 by jcmarco: Added support for Vertical Tabs.
+by smk-ka: Easier access to permissions page from invite settings.
 
 
 Invite 6.x-2.0-BETA2, 2010-08-01
