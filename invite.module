@@ -257,7 +257,11 @@ function invite_user_register_access() {
     }
   }
   if (!$invite && !user_access('administer users')) {
-    drupal_set_message(t('Sorry, new user registration by invitation only.'));
+    // The menu system checks access whenever local tasks are displayed. Make
+    // sure the message is output only for the path user/register.
+    if (arg(1) == 'register') {
+      drupal_set_message(t('Sorry, new user registration by invitation only.'));
+    }
     return FALSE;
   }
 
