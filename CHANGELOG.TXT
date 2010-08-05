@@ -2,6 +2,7 @@
 
 Invite 6.x-2.x, xxxx-xx-xx
 --------------------------
+#871090 by smk-ka: Fixed registration message appears on password reset form.
 #870930 by jcmarco: Added support for Vertical Tabs.
 by smk-ka: Easier access to permissions page from invite settings.
 
