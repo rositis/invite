@@ -2,6 +2,7 @@
 
 Invite 6.x-2.x, xxxx-xx-xx
 --------------------------
+by smk-ka: Cleaned up README.
 #496894 by seutje, smk-ka: Increased size of e-mail subject field.
 #871090 by smk-ka: Fixed registration message appears on password reset form.
 #870930 by jcmarco: Added support for Vertical Tabs.
