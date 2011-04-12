@@ -9,7 +9,7 @@
  * Menu callback; display invite settings form.
  */
 function invite_settings() {
-  $permissions_url = url('admin/user/permissions', array('query' => drupal_get_destination(), 'fragment' => 'module-invite'));
+  $permissions_url = url('admin/people/permissions', array('query' => drupal_get_destination(), 'fragment' => 'module-invite'));
 
   $roles = user_roles(FALSE, 'send invitations');
   if (count($roles) == 0) {
@@ -204,7 +204,7 @@ function invite_admin_overview() {
   if (isset($_SESSION[INVITE_ADMIN_SESSION])) {
     $result->innerJoin('users', 'u2', 'u2.uid = i.invite');
     $result->where("LOWER(u2.name) LIKE LOWER('%s%%')");
-    
+
     $filter_args = $_SESSION[INVITE_ADMIN_SESSION];
     $query = 'filter=' . $filter_args;
     unset($_SESSION[INVITE_ADMIN_SESSION]);
@@ -216,7 +216,7 @@ function invite_admin_overview() {
   $result->groupBy('u1.data');
   $result->orderByHeader($header);
   $result = $result->execute()->fetchAll();
-  
+
   $rows = array();
   foreach ($result as $row) {
     $cells = array();
@@ -304,7 +304,7 @@ function invite_admin_details($account) {
     ->extend('PagerDefault');
   $result->leftJoin('users', 'u', 'u.uid = i.invitee AND u.uid <> 0');
   $reults->condition('i.uid', $account->uid);
-  
+
   $output = '';
   $filter = $filter_args = NULL;
   if (isset($_GET['filter']) && $_GET['filter'] != '') {
@@ -381,7 +381,7 @@ function invite_user_overview($page = 'accepted') {
     ->extend('PagerDefault')
     ->condition('i.uid', $user->uid)
     ->condition('canceled', 0);
-  
+
   switch ($page) {
     case 'accepted':
     // @TODO: I believe that if default is at the top it will always be
@@ -409,7 +409,7 @@ function invite_user_overview($page = 'accepted') {
 
   //$result = pager_query($sql, 50, 0, NULL, $user->uid, REQUEST_TIME);
   $result = $query->execute()->fetchAll();
-  
+
   foreach ($result as $invite) {
     $row = array();
     switch ($page) {
@@ -465,4 +465,3 @@ function theme_invite_user_overview($variables) {
 
   return $output;
 }
-
