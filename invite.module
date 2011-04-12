@@ -1332,11 +1332,11 @@ function invite_resend($invite) {
 function invite_count($uid, $op) {
   switch ($op) {
     case 'accepted':
-      return db_query("SELECT COUNT(*) FROM {invite} WHERE uid = %d AND joined <> 0", $uid)->fetchField();
+      return db_query("SELECT COUNT(*) FROM {invite} WHERE uid = :uid AND joined <> 0", array(':uid' => $uid))->fetchField();
     case 'pending':
-      return db_query("SELECT COUNT(*) FROM {invite} WHERE uid = %d AND joined = 0 AND expiry >= %d", $uid, REQUEST_TIME)->fetchField();
+      return db_query("SELECT COUNT(*) FROM {invite} WHERE uid = :uid AND joined = 0 AND expiry >= :rtime", array(':uid' => $uid, ':rtime' => REQUEST_TIME))->fetchField();
     case 'expired':
-      return db_query("SELECT COUNT(*) FROM {invite} WHERE uid = %d AND joined = 0 AND expiry < %d", $uid, REQUEST_TIME)->fetchField();
+      return db_query("SELECT COUNT(*) FROM {invite} WHERE uid = :uid AND joined = 0 AND expiry < :rtime", array(':uid' => $uid, ':rtime' => REQUEST_TIME))->fetchField();
   }
 }
 
