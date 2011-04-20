@@ -15,6 +15,13 @@ function invite_views_views_data() {
     'title' => t('Invite'),
     'help' => t('The base table for invites.'),
   );
+  $data['invite']['table']['join'] = array(
+    'users' => array(
+      'left_field' => 'uid',
+      'field' => 'uid',
+      'type' => 'INNER',
+    ),
+  );
   /* fields */
   /* 'iid' field */
   $data['invite']['iid'] = array(
