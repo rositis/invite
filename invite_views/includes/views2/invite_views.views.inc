@@ -216,7 +216,7 @@ function invite_views_views_data() {
       'click sortable' => TRUE,
     ),
     'argument' => array(
-      'handler' => 'views_handler_argument_user_uid_name',
+      'handler' => 'views_handler_argument_user_uid',
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_user_name',
