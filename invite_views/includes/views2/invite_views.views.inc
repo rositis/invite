@@ -129,6 +129,12 @@ function invite_views_views_data() {
   $data['invite']['invitee'] = array(
     'title' => t('Invite registration user ID'),
     'help' => t('User ID of the invite upon registration.'),
+    'relationship' => array(
+      'label' => t('Invite registration UID'),
+      'handler' => 'views_handler_relationship',
+      'base' => 'users',
+      'field' => 'uid',
+    ),
     'field' => array(
       'handler' => 'views_handler_field_markup',
       'format' => FILTER_FORMAT_DEFAULT,
