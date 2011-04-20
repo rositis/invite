@@ -16,6 +16,12 @@ function invite_schema() {
   $schema['invite'] = array(
     'description' => 'The base table for invites.',
     'fields' => array(
+      'iid' => array(
+        'description' => 'The primary identifier for a invite.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
       'reg_code' => array(
         'description' => 'Stores the issued registration code and acts as primary identifier for a invite.',
         'type' => 'varchar',
@@ -87,6 +93,7 @@ function invite_schema() {
       'email' => array('email'),
       'uid'   => array('uid'),
     ),
+    'primary key' => array('iid'),
   );
 
   $schema['invite_notifications'] = array(
@@ -391,4 +398,3 @@ function invite_update_203() {
   _invite_update_role_name_to_id('invite_target_role');
   return $ret;
 }
-
