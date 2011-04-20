@@ -73,5 +73,43 @@ function invite_views_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
+  /* 'uid' field */
+  $data['invite']['uid'] = array(
+    'title' => t('Invite owner user ID'),
+    'help' => t('User ID of the inviter.'),
+    'field' => array(
+      'handler' => 'views_handler_field_markup',
+      'format' => FILTER_FORMAT_DEFAULT,
+      'click sortable' => TRUE,
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_argument_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  /* 'invitee' field */
+  $data['invite']['invitee'] = array(
+    'title' => t('Invite registration user ID'),
+    'help' => t('User ID of the invite upon registration.'),
+    'field' => array(
+      'handler' => 'views_handler_field_markup',
+      'format' => FILTER_FORMAT_DEFAULT,
+      'click sortable' => TRUE,
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_argument_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
   return $data;
 }
