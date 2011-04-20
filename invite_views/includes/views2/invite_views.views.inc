@@ -118,5 +118,50 @@ function invite_views_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
+  /* 'created' field */
+  $data['invite']['created'] = array(
+    'title' => t('Invite creation time'),
+    'help' => t('Stores the creation time of the invite.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
+    ),
+  );
+  /* 'expiry' field */
+  $data['invite']['expiry'] = array(
+    'title' => t('Invite expiry time'),
+    'help' => t('Expiry time of the invite.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
+    ),
+  );
+  /* 'joined' field */
+  $data['invite']['joined'] = array(
+    'title' => t('Invite joined time'),
+    'help' => t('Time the invite was accepted upon registration.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
+    ),
+  );
   return $data;
 }
