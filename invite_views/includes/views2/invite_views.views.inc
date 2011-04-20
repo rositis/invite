@@ -22,6 +22,13 @@ function invite_views_views_data() {
       'type' => 'INNER',
     ),
   );
+  $data['users']['table']['join'] = array(
+    'invite' => array(
+      'left_field' => 'uid',
+      'field' => 'uid',
+      'type' => 'INNER',
+    ),
+  );
   /* fields */
   /* 'iid' field */
   $data['invite']['iid'] = array(
