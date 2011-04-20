@@ -163,5 +163,35 @@ function invite_views_views_data() {
       'handler' => 'views_handler_filter_date',
     ),
   );
+  /* 'canceled' field */
+  $data['invite']['canceled'] = array(
+    'title' => t('Invite canceled'),
+    'help' => t('The invite has been withdrawn.'),
+    'field' => array(
+      'handler' => 'views_handler_field_boolean',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_boolean_operator',
+    ),
+  );
+  /* 'resent' field */
+  $data['invite']['resent'] = array(
+    'title' => t('Invite resent number'),
+    'help' => t('How many times the invite has been resent.'),
+    'field' => array(
+      'handler' => 'views_handler_field_numeric',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+  );
   return $data;
 }
