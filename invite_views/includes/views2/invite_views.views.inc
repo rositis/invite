@@ -106,25 +106,6 @@ function invite_views_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
-  /* 'uid' user name */
-  $data['invite']['uid_name'] = array(
-    'real field' => 'uid',
-    'title' => t('Invite owner user name'),
-    'help' => t('User name of the inviter.'),
-    'field' => array(
-      'handler' => 'views_handler_field_invite_uid_name',
-      'click sortable' => TRUE,
-    ),
-    'argument' => array(
-      'handler' => 'views_handler_argument_user_uid_name',
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_user_name',
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
-  );
   /* 'invitee' field */
   $data['invite']['invitee'] = array(
     'title' => t('Invite registration user ID'),
@@ -223,6 +204,25 @@ function invite_views_views_data() {
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_numeric',
+    ),
+  );
+  /* 'uid' user name */
+  $data['invite']['uid_name'] = array(
+    'real field' => 'uid',
+    'title' => t('Invite owner user name'),
+    'help' => t('User name of the inviter.'),
+    'field' => array(
+      'handler' => 'views_handler_field_invite_uid_name',
+      'click sortable' => TRUE,
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_user_uid_name',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_user_name',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
     ),
   );
   return $data;
