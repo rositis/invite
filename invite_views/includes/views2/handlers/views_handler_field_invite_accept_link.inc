@@ -1,7 +1,7 @@
 <?php
 
 /**
- * User name of the inviter.
+ * Invite accept link.
  */
 class views_handler_field_invite_accept_link extends views_handler_field {
   function construct() {
@@ -27,5 +27,11 @@ class views_handler_field_invite_accept_link extends views_handler_field {
   function query() {
     $this->ensure_my_table();
     $this->add_additional_fields();
+  }
+
+  function render($values) {
+    $text = !empty($this->options['text']) ? check_plain($this->options['text']) : t('link');
+    $reg_code = $values->{$this->aliases['reg_code']};
+    return l($text, 'invite/accept/' . $reg_code);
   }
 }
