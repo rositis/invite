@@ -208,7 +208,6 @@ function invite_views_views_data() {
   );
   /* 'uid' user name */
   $data['invite']['uid_name'] = array(
-    'real field' => 'uid',
     'title' => t('Invite owner user name'),
     'help' => t('User name of the inviter.'),
     'field' => array(
