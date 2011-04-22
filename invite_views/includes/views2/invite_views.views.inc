@@ -232,6 +232,14 @@ function invite_views_views_data() {
       'handler' => 'views_handler_field_invite_accept_link',
     ),
   );
+  /* withdraw link */
+  $data['invite']['withdraw_link'] = array(
+    'title' => t('Invite withdraw link'),
+    'help' => t('Invite withdraw link.'),
+    'field' => array(
+      'handler' => 'views_handler_field_invite_withdraw_link',
+    ),
+  );
   return $data;
 }
 
@@ -249,6 +257,9 @@ function invite_views_views_handlers() {
       ),
       'views_handler_field_invite_accept_link' => array(
         'parent' => 'views_handler_field',
+      ),
+      'views_handler_field_invite_withdraw_link' => array(
+        'parent' => 'views_handler_field_invite_accept_link',
       ),
     ),
   );
