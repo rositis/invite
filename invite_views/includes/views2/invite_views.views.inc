@@ -224,6 +224,14 @@ function invite_views_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
+  /* accept link */
+  $data['invite']['accept_link'] = array(
+    'title' => t('Invite accept link'),
+    'help' => t('Invite accept link.'),
+    'field' => array(
+      'handler' => 'views_handler_field_invite_accept_link',
+    ),
+  );
   return $data;
 }
 
@@ -238,6 +246,9 @@ function invite_views_views_handlers() {
     'handlers' => array(
       'views_handler_field_invite_uid_name' => array(
         'parent' => 'views_handler_field_user_name',
+      ),
+      'views_handler_field_invite_accept_link' => array(
+        'parent' => 'views_handler_field',
       ),
     ),
   );
