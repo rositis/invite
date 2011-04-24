@@ -224,6 +224,24 @@ function invite_views_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
+  /* 'invitee' user name */
+  $data['invite']['invitee_name'] = array(
+    'title' => t('Invite registration user name'),
+    'help' => t('User name of the invite upon registration.'),
+    'field' => array(
+      'handler' => 'views_handler_field_invite_invitee_name',
+      'click sortable' => TRUE,
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_user_uid',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_user_name',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
   /* accept link */
   $data['invite']['accept_link'] = array(
     'title' => t('Invite accept link'),
@@ -261,6 +279,9 @@ function invite_views_views_handlers() {
     ),
     'handlers' => array(
       'views_handler_field_invite_uid_name' => array(
+        'parent' => 'views_handler_field_user_name',
+      ),
+      'views_handler_field_invite_invitee_name' => array(
         'parent' => 'views_handler_field_user_name',
       ),
       'views_handler_field_invite_accept_link' => array(
