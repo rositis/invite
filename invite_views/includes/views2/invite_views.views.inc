@@ -240,6 +240,14 @@ function invite_views_views_data() {
       'handler' => 'views_handler_field_invite_withdraw_link',
     ),
   );
+  /* resend link */
+  $data['invite']['resend_link'] = array(
+    'title' => t('Invite resend link'),
+    'help' => t('Invite resend link.'),
+    'field' => array(
+      'handler' => 'views_handler_field_invite_resend_link',
+    ),
+  );
   return $data;
 }
 
@@ -259,6 +267,9 @@ function invite_views_views_handlers() {
         'parent' => 'views_handler_field',
       ),
       'views_handler_field_invite_withdraw_link' => array(
+        'parent' => 'views_handler_field_invite_accept_link',
+      ),
+      'views_handler_field_invite_resend_link' => array(
         'parent' => 'views_handler_field_invite_accept_link',
       ),
     ),
