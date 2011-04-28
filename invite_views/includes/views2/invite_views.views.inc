@@ -15,20 +15,6 @@ function invite_views_views_data() {
     'title' => t('Invite'),
     'help' => t('The base table for invites.'),
   );
-  $data['invite']['table']['join'] = array(
-    'users' => array(
-      'left_field' => 'uid',
-      'field' => 'uid',
-      'type' => 'INNER',
-    ),
-  );
-  $data['users']['table']['join'] = array(
-    'invite' => array(
-      'left_field' => 'uid',
-      'field' => 'uid',
-      'type' => 'INNER',
-    ),
-  );
   /* fields */
   /* 'iid' field */
   $data['invite']['iid'] = array(
@@ -91,6 +77,12 @@ function invite_views_views_data() {
   $data['invite']['uid'] = array(
     'title' => t('Invite owner user ID'),
     'help' => t('User ID of the inviter.'),
+    'relationship' => array(
+      'label' => t('Invite owner UID'),
+      'handler' => 'views_handler_relationship',
+      'base' => 'users',
+      'field' => 'uid',
+    ),
     'field' => array(
       'handler' => 'views_handler_field_markup',
       'format' => FILTER_FORMAT_DEFAULT,
@@ -204,42 +196,6 @@ function invite_views_views_data() {
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_numeric',
-    ),
-  );
-  /* 'uid' user name */
-  $data['invite']['uid_name'] = array(
-    'title' => t('Invite owner user name'),
-    'help' => t('User name of the inviter.'),
-    'field' => array(
-      'handler' => 'views_handler_field_invite_uid_name',
-      'click sortable' => TRUE,
-    ),
-    'argument' => array(
-      'handler' => 'views_handler_argument_user_uid',
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_user_name',
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
-  );
-  /* 'invitee' user name */
-  $data['invite']['invitee_name'] = array(
-    'title' => t('Invite registration user name'),
-    'help' => t('User name of the invite upon registration.'),
-    'field' => array(
-      'handler' => 'views_handler_field_invite_invitee_name',
-      'click sortable' => TRUE,
-    ),
-    'argument' => array(
-      'handler' => 'views_handler_argument_user_uid',
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_user_name',
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
     ),
   );
   /* accept link */
