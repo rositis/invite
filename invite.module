@@ -311,7 +311,7 @@ function invite_notify($uid) {
   while ($row = db_fetch_object($result)) {
     $account = user_load(array('uid' => $row->invitee, 'status' => 1));
     if ($account) {
-      drupal_set_message(t('!user (@email) has joined @site-name!', array('!user' => theme('username', $account), '@email' => $account->mail, '@site-name' => variable_get('site_name', t('Drupal')))));
+      drupal_set_message(check_plain(t('!user (@email) has joined @site-name!', array('!user' => theme('username', $account), '@email' => $account->mail, '@site-name' => variable_get('site_name', t('Drupal'))))));
       db_query("DELETE FROM {invite_notifications} WHERE uid = %d AND invitee = %d", $uid, $row->invitee);
     }
   }
@@ -441,11 +441,11 @@ function invite_validate($invite) {
     drupal_set_message(t('This invitation has been withdrawn.'));
     drupal_goto();
   }
-  else if ($invite->joined != 0) {
+  elseif ($invite->joined != 0) {
     drupal_set_message(t('This invitation has already been used. Please login now with your username and password.'));
     drupal_goto('user');
   }
-  else if ($invite->expiry < time()) {
+  elseif ($invite->expiry < time()) {
     drupal_set_message(t('Sorry, this invitation has expired.'));
     drupal_goto();
   }
@@ -595,7 +595,7 @@ function invite_block($op = 'list', $delta = 0, $edit = array()) {
     $blocks[0] = array('info' => t('Invite a friend'), 'cache' => BLOCK_CACHE_PER_ROLE);
     return $blocks;
   }
-  else if ($op == 'view') {
+  elseif ($op == 'view') {
     $block = array();
     switch ($delta) {
       case 0:
@@ -638,7 +638,7 @@ function invite_form(&$form_state, $op = 'page', $edit = array()) {
       $form['#access'] = FALSE;
       return $form;
     }
-    else if (!$edit) {
+    elseif (!$edit) {
       // Deny access when NOT resending an invite.
       drupal_set_message(t("Sorry, you've reached the maximum number of invitations."), 'error');
       drupal_goto(referer_uri());
@@ -1089,7 +1089,7 @@ function invite_form_submit($form, &$form_state) {
   if (!variable_get('invite_use_users_email', 0)) {
     $from = variable_get('invite_manual_from', '');
   }
-  else if ($user->uid) {
+  elseif ($user->uid) {
     $from = $user->mail;
   }
   if (!$from) {
@@ -1144,7 +1144,7 @@ function invite_form_submit($form, &$form_state) {
     $message = format_plural($num_failed, 'The entered e-mail address is invalid. Please correct it.', '@count entered e-mail addresses are invalid. Please correct them.');
     drupal_set_message($message, 'error');
   }
-  else if (user_access('track invitations') && $user->uid) {
+  elseif (user_access('track invitations') && $user->uid) {
     // Everything went well: redirect to pending invites page.
     $form_state['redirect'] = "user/$user->uid/invites/pending";
   }
@@ -1190,7 +1190,7 @@ function invite_mail($key, &$message, $params) {
   if (!variable_get('invite_use_users_email_replyto', 0)) {
     $reply_to = variable_get('invite_manual_reply_to', '');
   }
-  else if ($user->uid) {
+  elseif ($user->uid) {
     $reply_to = $user->mail;
   }
   if ($reply_to) {

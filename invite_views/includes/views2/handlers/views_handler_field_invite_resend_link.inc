@@ -1,6 +1,7 @@
 <?php
 
 /**
+ * @file
  * Invite resend link.
  */
 class views_handler_field_invite_resend_link extends views_handler_field_invite_accept_link {

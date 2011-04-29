@@ -1,6 +1,7 @@
 <?php
 
 /**
+ * @file
  * Invite withdraw link.
  */
 class views_handler_field_invite_withdraw_link extends views_handler_field_invite_accept_link {
