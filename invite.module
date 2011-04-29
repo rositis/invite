@@ -315,7 +315,7 @@ function invite_user_access($permission, $account) {
  */
 function invite_notify($uid) {
   $result = db_query('SELECT invitee FROM {invite_notifications} WHERE uid = :uid', array(':uid' => $uid))->fetchAll();
-  foreach($result as $row) {
+  foreach ($result as $row) {
     $account = user_load_multiple(array($row->invitee), array('status' => 1));
     if ($account) {
       drupal_set_message(t('!user (@email) has joined @site-name!', array('!user' => theme('username', array('account' => $account)), '@email' => $account->mail, '@site-name' => variable_get('site_name', t('Drupal')))));
