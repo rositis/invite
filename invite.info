@@ -1,6 +1,7 @@
 name = Invite
 description = "Allow your users to send and track invitations to join your site."
 core = 7.x
+version = 7.x-2.x-dev
 package = Invite
 dependencies[] = token
 files[] = invite.module
