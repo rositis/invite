@@ -117,7 +117,9 @@ function invite_load($value, $reg_code = FALSE) {
       $iids[] = $item->iid;
     }
     $invites = entity_load('invite', $iids);
-    return $invites;
+    if (isset($invites[$iids[0]])) {
+      return $invites[$iids[0]];
+    }
   }
   else {
     return FALSE;
