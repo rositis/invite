@@ -81,3 +81,39 @@ function invite_uri($invite) {
     'path' => 'invite/item/' . $invite->iid,
   );
 }
+
+/**
+ * load invitations data
+ *
+ * @param $value
+ *   Invite object primary key or registration code
+ * @param $reg_code
+ *   If FALSE, then $value is invite primary key. If TRUE, then $value is registration code.
+ *
+ * @return
+ *   A invite object or FALSE if not available.
+ */
+function invite_load($value, $reg_code = FALSE) {
+  $query = new EntityFieldQuery();
+  if (!$reg_code) { // invite primary key
+    $query
+      ->entityCondition('entity_type', 'invite', '=')
+      ->propertyCondition('iid', $value, '=');
+  }
+  else { // registration code
+    $query
+      ->entityCondition('entity_type', 'invite', '=')
+      ->propertyCondition('reg_code', $value, '=');
+  }
+  $result = $query->execute();
+  if ($result) {
+    foreach($result['invite'] as $item) {
+      $iids[] = $item->iid;
+    }
+    $invites = entity_load('invite', $iids);
+    return $invites;
+  }
+  else {
+    return FALSE;
+  }
+}
