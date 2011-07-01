@@ -45,3 +45,19 @@ function invite_entity_info() {
   );
   return $return;
 }
+
+/**
+ * Implements hook_permission().
+ */
+function invite_permission() {
+  return array(
+    'administer invitations' => array(
+      'title' => t('administer invitations'),
+      'description' => t('Administer all invitations'),
+    ),
+    'send invitations' => array(
+      'title' => t('send invitations'),
+      'description' => t('Send invitations to other users.'),
+    ),
+  );
+}
