@@ -38,7 +38,7 @@ function invite_entity_info() {
     'static cache' => TRUE,
     'view modes' => array(
       'full' => array(
-        'label' => t('Full'),
+        'label' => t('Full invite'),
         'custom settings' => FALSE,
       ),
     ),
