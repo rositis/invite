@@ -4,6 +4,13 @@
  * Implements hook_menu().
  */
 function invite_menu() {
+  $items['invite/%invite'] = array(
+    'title callback' => 'invite_title',
+    'title arguments' => array(1),
+    'page callback' => 'invite_item_view',
+    'page arguments' => array(1),
+    'access arguments' => array('view invitations'),
+  );
   $items['admin/config/people/invite'] = array(
     'title' => 'Invites',
     'page callback' => 'invite_admin_overview',
@@ -54,6 +61,10 @@ function invite_permission() {
     'administer invitations' => array(
       'title' => t('administer invitations'),
       'description' => t('Administer all invitations'),
+    ),
+    'view invitations' => array(
+      'title' => t('view invitations'),
+      'description' => t('View all invitations'),
     ),
     'send invitations' => array(
       'title' => t('send invitations'),
