@@ -61,3 +61,12 @@ function invite_permission() {
     ),
   );
 }
+
+/**
+ * uri callback
+ */
+function invite_uri($invite) {
+  return array(
+    'path' => 'invite/item/' . $invite->iid,
+  );
+}
