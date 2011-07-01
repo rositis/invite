@@ -1,0 +1,33 @@
+<?php
+
+/**
+ * Implements hook_entity_info().
+ */
+function invite_entity_info() {
+  $return['invite'] = array(
+    'label' => t('Invite'),
+    'base table' => 'invite',
+    'uri callback' => 'invite_uri',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'iid',
+    ),
+    'bundles' => array(
+      'invite' => array(
+        'label' => t('Invite'),
+        'admin' => array(
+          'path' => 'admin/config/people/invite',
+          'access arguments' => array('administer invitations'),
+        ),
+      ),
+    ),
+    'static cache' => TRUE,
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Full'),
+        'custom settings' => FALSE,
+      ),
+    ),
+  );
+  return $return;
+}
