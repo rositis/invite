@@ -75,6 +75,12 @@ function invite_permission() {
 
 /**
  * uri callback
+ *
+ * @param $invite
+ *   A invite object.
+ *
+ * @return
+ *   Full path for invite object.
  */
 function invite_uri($invite) {
   return array(
@@ -86,7 +92,7 @@ function invite_uri($invite) {
  * load invitations data
  *
  * @param $value
- *   Invite object primary key or registration code
+ *   Invite object primary key or registration code.
  * @param $reg_code
  *   If FALSE, then $value is invite primary key. If TRUE, then $value is registration code.
  *
