@@ -1,0 +1,4 @@
+- Full rewrite: Better API, maybe pluggable system
+- Entity-based module: Field attached to Invite
+- Full Views backend
+- Better hook system
