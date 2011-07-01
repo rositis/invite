@@ -125,3 +125,16 @@ function invite_load($value, $reg_code = FALSE) {
     return FALSE;
   }
 }
+
+/**
+ * invite title callback
+ *
+ * @param $invite
+ *   A invite object.
+ *
+ * @return
+ *   Title text for view invitations page
+ */
+function invite_title($invite) {
+  return t('View invitations: @email', array('@email' => $invite->email));
+}
