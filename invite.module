@@ -4,11 +4,11 @@
  * Implements hook_menu().
  */
 function invite_menu() {
-  $items['invite/%invite'] = array(
+  $items['invite/item/%invite'] = array(
     'title callback' => 'invite_title',
-    'title arguments' => array(1),
+    'title arguments' => array(2),
     'page callback' => 'invite_item_view',
-    'page arguments' => array(1),
+    'page arguments' => array(2),
     'access arguments' => array('view invitations'),
   );
   $items['admin/config/people/invite'] = array(
