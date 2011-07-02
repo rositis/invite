@@ -18,6 +18,10 @@ function invite_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'invite.admin.inc',
   );
+  $items['admin/config/people/invite/list'] = array(
+    'title' => 'Inviters',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
   return $items;
 }
 
