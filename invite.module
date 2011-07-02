@@ -74,6 +74,17 @@ function invite_permission() {
 }
 
 /**
+ * Implements hook_theme().
+ */
+function invite_theme($existing, $type, $theme, $path) {
+  return array(
+    'invite_view' => array(
+      'variables' => array('invite' => NULL),
+    ),
+  );
+}
+
+/**
  * uri callback
  *
  * @param $invite
