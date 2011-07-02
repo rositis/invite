@@ -169,4 +169,5 @@ function invite_view($invite) {
  */
 
 function theme_invite_view($variables = NULL) {
+  kpr($variables); // TODO: debug function!
 }
