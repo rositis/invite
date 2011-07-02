@@ -15,7 +15,6 @@ function invite_menu() {
     'title' => 'Invites',
     'page callback' => 'invite_admin_overview',
     'access arguments' => array('administer invitations'),
-    'type' => MENU_NORMAL_ITEM,
     'file' => 'invite.admin.inc',
   );
   $items['admin/config/people/invite/list'] = array(
