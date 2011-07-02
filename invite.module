@@ -7,7 +7,7 @@ function invite_menu() {
   $items['invite/item/%invite'] = array(
     'title callback' => 'invite_title',
     'title arguments' => array(2),
-    'page callback' => 'invite_item_view',
+    'page callback' => 'invite_view',
     'page arguments' => array(2),
     'access arguments' => array('view invitations'),
   );
@@ -148,4 +148,25 @@ function invite_load($value, $reg_code = FALSE) {
  */
 function invite_title($invite) {
   return t('View invitations: @email', array('@email' => $invite->email));
+}
+
+/**
+ * view invitations page
+ *
+ * @param $invite
+ *   A invite object.
+ */
+
+function invite_view($invite) {
+  return array(
+    '#theme' => 'invite_view',
+    '#invite' => $invite,
+  );
+}
+
+/**
+ * view invitations page - theme function
+ */
+
+function theme_invite_view($variables = NULL) {
 }
