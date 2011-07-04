@@ -21,6 +21,14 @@ function invite_menu() {
     'title' => 'Inviters',
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
+  // Frontend menu items
+  $items['invite'] = array(
+    'title' => 'Invite a friend',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('invite_form_content', 'page'),
+    'access arguments' => array('send invitations'),
+    'type' => MENU_NORMAL_ITEM,
+  );
   return $items;
 }
 
@@ -181,12 +189,39 @@ function invite_title($invite) {
 }
 
 /**
+ * Generate the invite forms.
+ */
+function invite_form_content(&$form_state, $view_mode = 'page') {
+  global $user;
+  $form['from'] = array(
+    '#type' => 'item',
+    '#title' => t('From:'),
+    '#markup' => check_plain($user->mail),
+  );
+  $form['to'] = array(
+    '#type' => 'textfield',
+    '#title' => t('To:'),
+  );
+  $form['subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject:'),
+  );
+  $form['reg_code'] = array(
+    '#type' => 'value',
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Send invite'),
+  );
+  return $form;
+}
+
+/**
  * view invitations page
  *
  * @param $invite
  *   A invite object.
  */
-
 function invite_view($invite) {
   return array(
     '#theme' => 'invite_view',
