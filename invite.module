@@ -116,6 +116,52 @@ function invite_menu_alter(&$items) {
 }
 
 /**
+ * Implements hook_field_extra_fields().
+ */
+function invite_field_extra_fields() {
+  $extra = array();
+  $extra['invite']['invite'] = array(
+    'form' => array(
+      'from' => array(
+        'label' => t('From'),
+        'weight' => -5,
+      ),
+      'to' => array(
+        'label' => t('To'),
+        'weight' => -5,
+      ),
+      'subject' => array(
+        'label' => t('Subject'),
+        'weight' => -5,
+      ),
+      'submit' => array(
+        'label' => t('Send invite'),
+        'weight' => -5,
+      ),
+    ),
+    'display' => array(
+      'from' => array(
+        'label' => t('From'),
+        'weight' => -5,
+      ),
+      'to' => array(
+        'label' => t('To'),
+        'weight' => -5,
+      ),
+      'subject' => array(
+        'label' => t('Subject'),
+        'weight' => -5,
+      ),
+      'submit' => array(
+        'label' => t('Send invite'),
+        'weight' => -5,
+      ),
+    ),
+  );
+  return $extra;
+}
+
+/**
  * Determine if user registration mode is set to invite only.
  */
 function invite_user_registration_by_invite_only() {
@@ -196,6 +242,7 @@ function invite_title($invite) {
  */
 function invite_form_content($form, &$form_state, $view = 'page') {
   global $user;
+  $invite = new stdClass;
   $form['iid'] = array(
     '#type' => 'value',
   );
@@ -213,6 +260,7 @@ function invite_form_content($form, &$form_state, $view = 'page') {
   );
   $form['#validate'][] = 'invite_form_validate';
   $form['#submit'][] = 'invite_form_submit';
+  field_attach_form('invite', $invite, &$form, &$form_state);
   return $form;
 }
 
