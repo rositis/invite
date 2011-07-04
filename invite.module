@@ -88,6 +88,17 @@ function invite_theme($existing, $type, $theme, $path) {
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function invite_form_user_admin_settings_alter(&$form, &$form_state, $form_id) {
+  $item = menu_get_item('user/register');
+  // Setting is only allowed if no other module has overridden the menu access handler for the user registration form.
+  if (in_array($item['access_callback'], array('user_register_access', 'invite_user_register_access'))) { // TODO: invite_user_register_access()
+    $form['registration_cancellation']['user_register']['#options']['inviteonly'] = t('New user registration by invitation only.');
+  }
+}
+
+/**
  * uri callback
  *
  * @param $invite
