@@ -240,6 +240,15 @@ function invite_form_page($form, &$form_state, $user) {
 }
 
 /**
+ * form validation
+ */
+function invite_form_validate($form, &$form_state) {
+  if (!valid_email_address($form_state['values']['to'])) {
+    form_set_error('to', t('Valid email adress required!'));
+  }
+}
+
+/**
  * view invitations page
  *
  * @param $invite
