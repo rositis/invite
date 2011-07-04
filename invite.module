@@ -196,9 +196,12 @@ function invite_title($invite) {
  */
 function invite_form_content($form, &$form_state, $view = 'page') {
   global $user;
+  $form['iid'] = array(
+    '#type' => 'value',
+  );
   switch ($view) {
     case 'page':
-      $form = invite_form_page($form, $form_state, $user);
+      $form += invite_form_page($form, $form_state, $user);
       break;
   }
   $form['reg_code'] = array(
