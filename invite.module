@@ -11,6 +11,12 @@ function invite_menu() {
     'page arguments' => array(2),
     'access arguments' => array('view invitations'),
   );
+  $items['invite/item/%invite/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('invite_form_common', 'page', 2),
+    'access arguments' => array('administer invitations'),
+  );
   $items['admin/config/people/invite'] = array(
     'title' => 'Invites',
     'page callback' => 'invite_admin_overview',
@@ -239,51 +245,71 @@ function invite_title($invite) {
  *
  * @param $view
  *   Form view mode.
+ * @param $invite
+ *   Current invite object, if exist.
  */
-function invite_form_common($form, &$form_state, $view = 'page') {
-  global $user;
-  $invite = new stdClass;
+function invite_form_common($form, &$form_state, $view = 'page', $invite = FALSE) {
   $form['iid'] = array(
     '#type' => 'value',
   );
+  // custom form elements
   switch ($view) {
     case 'page':
-      $form += invite_form_page($form, $form_state, $user);
+      $form += invite_form_page($form, $form_state, $invite);
       break;
   }
   $form['reg_code'] = array(
     '#type' => 'value',
+    '#value' => isset($invite->reg_code) ? $invite->reg_code : '',
   );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Send invite'),
-  );
+  if (!$invite) { // new invite
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Send invite'),
+    );
+    $form['#submit'][] = 'invite_form_submit';
+  }
+  else { // edit invite
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Update fields'),
+    );
+    $form['#submit'][] = 'invite_form_update'; // TODO
+  }
   $form['#validate'][] = 'invite_form_validate';
-  $form['#submit'][] = 'invite_form_submit';
   field_attach_form('invite', $invite, &$form, &$form_state);
+  $form['#invite'] = $invite;
+  $form_state['invite'] = $invite;
   return $form;
 }
 
 /**
  * Invite form - page view
  */
-function invite_form_page($form, &$form_state, $user) {
-  $form['from'] = array(
-    '#type' => 'item',
-    '#title' => t('From:'),
-    '#required' => TRUE,
-    '#markup' => check_plain($user->mail),
-  );
+function invite_form_page($form, &$form_state, $invite) {
+  global $user;
+  if (!$invite) {
+    $form['from'] = array(
+      '#type' => 'item',
+      '#title' => t('From:'),
+      '#required' => TRUE,
+      '#markup' => check_plain($user->mail),
+    );
+  }
   $form['to'] = array(
     '#type' => 'textfield',
     '#title' => t('To:'),
     '#required' => TRUE,
+    '#disabled' => isset($invite->email),
+    '#default_value' => ($invite->email) ? $invite->email : '',
   );
-  $form['subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Subject:'),
-    '#required' => TRUE,
-  );
+  if (!$invite) {
+    $form['subject'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Subject:'),
+      '#required' => TRUE,
+    );
+  }
   return $form;
 }
 
@@ -324,6 +350,14 @@ function invite_view($invite) {
 function theme_invite_view($variables = NULL) {
   kpr($variables); // TODO: debug function!
 }
+
+
+function invite_create_invite($invite) {
+  dsm('create'); // TODO: debug
+  dsm($invite);
+}
+
+
 
 /**
  * Generates a unique tracking code.
