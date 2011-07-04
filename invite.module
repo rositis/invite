@@ -211,6 +211,8 @@ function invite_form_content($form, &$form_state, $view = 'page') {
     '#type' => 'submit',
     '#value' => t('Send invite'),
   );
+  $form['#validate'][] = 'invite_form_validate';
+  $form['#submit'][] = 'invite_form_submit';
   return $form;
 }
 
@@ -221,15 +223,18 @@ function invite_form_page($form, &$form_state, $user) {
   $form['from'] = array(
     '#type' => 'item',
     '#title' => t('From:'),
+    '#required' => TRUE,
     '#markup' => check_plain($user->mail),
   );
   $form['to'] = array(
     '#type' => 'textfield',
     '#title' => t('To:'),
+    '#required' => TRUE,
   );
   $form['subject'] = array(
     '#type' => 'textfield',
     '#title' => t('Subject:'),
+    '#required' => TRUE,
   );
   return $form;
 }
