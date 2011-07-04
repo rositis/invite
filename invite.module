@@ -99,6 +99,15 @@ function invite_form_user_admin_settings_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
+ * Implements hook_menu_alter().
+ */
+function invite_menu_alter(&$items) {
+  if (invite_user_registration_by_invite_only()) {
+    $items['user/register']['access callback'] = 'invite_user_register_access'; // TODO: invite_user_register_access()
+  }
+}
+
+/**
  * Determine if user registration mode is set to invite only.
  */
 function invite_user_registration_by_invite_only() {
