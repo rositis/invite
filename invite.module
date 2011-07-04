@@ -189,10 +189,32 @@ function invite_title($invite) {
 }
 
 /**
- * Generate the invite forms.
+ * Generate the invite forms - common fields
+ *
+ * @param $view
+ *   Form view mode.
  */
-function invite_form_content(&$form_state, $view_mode = 'page') {
+function invite_form_content($form, &$form_state, $view = 'page') {
   global $user;
+  switch ($view) {
+    case 'page':
+      $form = invite_form_page($form, $form_state, $user);
+      break;
+  }
+  $form['reg_code'] = array(
+    '#type' => 'value',
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Send invite'),
+  );
+  return $form;
+}
+
+/**
+ * Invite form - page view
+ */
+function invite_form_page($form, &$form_state, $user) {
   $form['from'] = array(
     '#type' => 'item',
     '#title' => t('From:'),
@@ -205,13 +227,6 @@ function invite_form_content(&$form_state, $view_mode = 'page') {
   $form['subject'] = array(
     '#type' => 'textfield',
     '#title' => t('Subject:'),
-  );
-  $form['reg_code'] = array(
-    '#type' => 'value',
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Send invite'),
   );
   return $form;
 }
