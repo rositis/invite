@@ -316,3 +316,17 @@ function invite_view($invite) {
 function theme_invite_view($variables = NULL) {
   kpr($variables); // TODO: debug function!
 }
+
+/**
+ * Generates a unique tracking code.
+ *
+ * @return
+ *   An 8-digit unique tracking code.
+ */
+function invite_generate_code() {
+  do {
+    $reg_code = user_password(8);
+    $result = db_query("SELECT COUNT(*) AS count FROM {invite} WHERE reg_code = :reg_code", array(':reg_code' => $reg_code))->fetchAssoc();
+  } while ($result['count'] != 0);
+  return $reg_code;
+}
