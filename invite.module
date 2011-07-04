@@ -25,7 +25,7 @@ function invite_menu() {
   $items['invite'] = array(
     'title' => 'Invite a friend',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('invite_form_content', 'page'),
+    'page arguments' => array('invite_form_common', 'page'),
     'access arguments' => array('send invitations'),
     'type' => MENU_NORMAL_ITEM,
   );
@@ -240,7 +240,7 @@ function invite_title($invite) {
  * @param $view
  *   Form view mode.
  */
-function invite_form_content($form, &$form_state, $view = 'page') {
+function invite_form_common($form, &$form_state, $view = 'page') {
   global $user;
   $invite = new stdClass;
   $form['iid'] = array(
