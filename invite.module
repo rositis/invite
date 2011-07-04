@@ -99,6 +99,13 @@ function invite_form_user_admin_settings_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
+ * Determine if user registration mode is set to invite only.
+ */
+function invite_user_registration_by_invite_only() {
+  return (variable_get('user_register', 1) === 'inviteonly');
+}
+
+/**
  * uri callback
  *
  * @param $invite
