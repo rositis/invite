@@ -221,13 +221,15 @@ function invite_admin_overview() {
 
   $rows = array();
   foreach ($result as $row) {
+    $account = user_load($row->uid);
+    
     $cells = array();
     $cells[] = theme('username', array('account' => $row, 'name' => $row->name));
     $cells[] = $row->invites;
     $cells[] = invite_count($row->uid, 'accepted');
     $cells[] = invite_count($row->uid, 'pending');
     $cells[] = invite_count($row->uid, 'expired');
-    $remaining = invite_get_remaining_invites($row);
+    $remaining = invite_get_remaining_invites($account);
     $cells[] = ($remaining == INVITE_UNLIMITED) ? '&infin;' : $remaining;
     $cells[] = l(t('details'), "admin/user/invite/details/$row->uid", array('query' => $query));
     $rows[] = $cells;
