@@ -364,10 +364,10 @@ function invite_form_alter(&$form, &$form_state, $form_id) {
       $form['#submit'][] = 'menu_rebuild';
       break;
 
-    case 'user_register':
+    case 'user_register_form':
       // In order to prevent caching of the preset e-mail address, we have to
       // disable caching for user/register.
-      $GLOBALS['conf']['cache'] = CACHE_DISABLED;
+      $GLOBALS['conf']['cache'] = FALSE;
 
       $invite = invite_load_from_session();
 
