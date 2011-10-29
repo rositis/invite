@@ -231,7 +231,7 @@ function invite_admin_overview() {
     $cells[] = invite_count($row->uid, 'expired');
     $remaining = invite_get_remaining_invites($account);
     $cells[] = ($remaining == INVITE_UNLIMITED) ? '&infin;' : $remaining;
-    $cells[] = l(t('details'), "admin/user/invite/details/$row->uid", array('query' => $query));
+    $cells[] = l(t('details'), "admin/config/people/invite/details/$row->uid", array('query' => $query));
     $rows[] = $cells;
   }
 
@@ -283,31 +283,20 @@ function invite_admin_filter_form_submit($form, &$form_state) {
  *   A user object.
  */
 function invite_admin_details($account) {
-  $now = REQUEST_TIME;
-  $status_sort = '';
-  if (isset($_GET['order']) && $_GET['order'] == t('Status')) {
-    $sort = db_escape_string($_GET['sort']);
-    if ($_GET['sort'] == 'asc') {
-      $status_sort = "IF(i.joined != 0, 0, 1) $sort, IF(i.expiry < $now, 0, 1) $sort, i.canceled";
-    }
-    else {
-      $status_sort = "i.canceled $sort, IF(i.expiry < $now, 0, 1) $sort, IF(i.joined != 0, 0, 1)";
-    }
-  }
   $header = array(
     array('data' => t('E-mail'), 'field' => 'i.email', 'sort' => 'asc'),
-    array('data' => t('Username'), 'field' => 'if(u.name IS NULL, 0, 1) DESC, u.name'),
+    array('data' => t('Username'), 'field' => 'u.name'),
     array('data' => t('Created'), 'field' => 'i.created'),
     array('data' => t('Expires'), 'field' => 'i.expiry'),
-    array('data' => t('Status'), 'field' => $status_sort),
+    array('data' => t('Status'), 'field' => 'i.canceled'),
   );
 
   $result = db_select('invite', 'i')
-    ->fields('i', array('email, invitee'))
+    ->fields('i')
     ->extend('TableSort')
     ->extend('PagerDefault');
   $result->leftJoin('users', 'u', 'u.uid = i.invitee AND u.uid <> 0');
-  $reults->condition('i.uid', $account->uid);
+  $result->condition('i.uid', $account->uid);
 
   $output = '';
   $filter = $filter_args = NULL;
@@ -317,21 +306,28 @@ function invite_admin_details($account) {
     $filter_args = $_GET['filter'];
     $output .= drupal_get_form('invite_admin_details_filter_form', $account->uid, $_GET['filter']);
   }
-  //$sql  = "SELECT i.email, i.invitee AS uid, u.name, i.created, i.expiry, i.joined, i.canceled FROM {invite} i LEFT JOIN {users} u ON u.uid = i.invitee AND u.uid <> 0 WHERE i.uid = %d" . $filter;
-  //$sql .= tablesort_sql($header);
-  //$result = pager_query($sql, 50, 0, NULL, $account->uid, $filter_args);
 
-  $result->orderByHeader($header);
-  $result = $result->execute()->fetchAll();
+  $result = $result->orderByHeader($header)
+    ->execute()
+    ->fetchAll();
 
+  if (isset($_GET['order']) && $_GET['order'] == t('Status')) {
+    usort($result, 'invite_sort_by_status');
+    if (isset($_GET['sort']) && $_GET['sort'] == 'desc') {
+      $result = array_reverse($result);
+    }
+  }
+  
   $rows = array();
   foreach ($result as $row) {
+    $invitee = user_load($row->invitee);
+    
     $cells = array();
     $cells[] = check_plain($row->email);
-    $cells[] = $row->joined ? theme('username', array('account' => $row)) : '';
-    $cells[] = format_date($row->created, 'custom', 'Y-m-d');
-    $cells[] = format_date($row->expiry, 'custom', 'Y-m-d');
-    $cells[] = $row->canceled ? t('Withdrawn') : ($row->joined ? t('Joined') : ($row->expiry < $now ? t('Expired') : t('Pending')));
+    $cells[] = $row->joined ? theme('username', array('account' => $invitee)) : '';
+    $cells[] = format_date($row->created, 'short');
+    $cells[] = format_date($row->expiry, 'short');
+    $cells[] = $row->canceled ? t('Withdrawn') : ($row->joined ? t('Joined') : ($row->expiry < REQUEST_TIME ? t('Expired') : t('Pending')));
     $rows[] = $cells;
   }
 
@@ -344,6 +340,21 @@ function invite_admin_details($account) {
   }
 
   return $output;
+}
+
+/**
+ * Comparison function callback to sort invites by status.
+ *
+ * @param $a
+ *   The first item to compare.
+ * @param $b
+ *   The second item to compare.
+ */
+function invite_sort_by_status($a, $b) {
+  $status_a = $a->canceled ? t('Withdrawn') : ($a->joined ? t('Joined') : ($a->expiry < REQUEST_TIME ? t('Expired') : t('Pending')));
+  $status_b = $b->canceled ? t('Withdrawn') : ($b->joined ? t('Joined') : ($b->expiry < REQUEST_TIME ? t('Expired') : t('Pending')));
+    
+  return $status_a < $status_b ? -1 : ($status_a > $status_b ? 1 : 0); 
 }
 
 function invite_admin_details_filter_form($uid, $filter) {
