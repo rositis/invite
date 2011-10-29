@@ -968,9 +968,9 @@ function invite_form_validate($form, &$form_state) {
   if (!$form_state['values']['resent']) {
     if (count($emails) > 0) {
       // Filter out already registered users, but pass validation.
-      // @TODO needs update to D7
-      //$failed_emails = _invite_validate_emails("SELECT mail AS email FROM {users} WHERE mail IN (:emails)", array(':emails' => $emails));
-      $failed_emails = array_keys(db_query("SELECT mail AS email FROM {users} WHERE mail IN (:emails)", array(':emails' => $emails))->fetchAllAssoc('mail'));
+      $failed_emails = _invite_filter_registered_emails($emails);
+      $emails = array_diff($emails, $failed_emails);
+
       if (count($failed_emails)) {
         $error = format_plural(count($failed_emails), 'The following recipient is already a member:', 'The following recipients are already members:') . '<br />';
         foreach ($failed_emails as $key => $email) {
@@ -984,9 +984,9 @@ function invite_form_validate($form, &$form_state) {
 
     if (!empty($emails)) {
       // Filter out already invited users, but pass validation.
-      // @TODO: Needs update for D7
-      //$failed_emails = _invite_validate_emails("SELECT email FROM {invite} WHERE email IN (:emails) AND uid = :uid AND canceled = 0", array(':emails' => $emails, 'uid' => $user->uid));
-      $failed_emails = array_keys(db_query("SELECT email FROM {invite} WHERE email IN (:emails) AND uid = :uid AND canceled = 0", array(':emails' => $emails, ':uid' => $user->uid))->fetchAllAssoc('email'));
+      $failed_emails = _invite_filter_invited_emails($user->uid, $emails);
+      $emails = array_diff($emails, $failed_emails);
+
       if (count($failed_emails)) {
         $error = format_plural(count($failed_emails), 'You have already invited the following recipient:', 'You have already invited the following recipients:') . '<br />';
         $error .= implode(', ', array_map('check_plain', $failed_emails));
@@ -1057,6 +1057,67 @@ function _invite_get_emails($string) {
 
   return $valid_emails;
 }
+
+/**
+ * Filters out e-mails that have already been invited by a user.
+ *
+ * @param $uid
+ *   The user id of the user whose invites should be searched.
+ * @param $emails
+ *   An array of e-mails to validate.
+ * @return
+ *   An array of e-mails that have already been invited by the user or NULL
+ *   on error.
+ */
+function _invite_filter_invited_emails($uid, $emails) {
+  if (!is_numeric($uid) || !is_array($emails)) {
+    return NULL;
+  }
+
+  $failed_emails = array();
+
+  $results = db_select('invite', 'i')
+    ->fields('i', array('email'))
+    ->condition('email', $emails, 'IN')
+    ->condition('uid', $uid)
+    ->condition('canceled', '0')
+    ->execute();
+
+  foreach ($results as $result) {
+    $failed_emails[] = $result->email;
+  }
+
+  return $failed_emails;
+}
+
+/**
+ * Filters out e-mails that are already registered in the system.
+ *
+ * @param $emails
+ *   An array of e-mails to validate.
+ * @return
+ *   An array of e-mail addresses that are already registered or NULL on
+ *   error.
+ */
+function _invite_filter_registered_emails($emails) {
+  if (!is_array($emails)) {
+    return NULL;
+  }
+
+  $failed_emails = array();
+
+  $results = db_select('users', 'u')
+    ->fields('u', array('mail'))
+    ->condition('mail', $emails, 'IN')
+    ->execute();
+
+  foreach ($results as $result) {
+    $failed_emails[] = $result->mail;
+  }
+
+  return $failed_emails;
+}
+
 
 /**
  * Filter out e-mails based on a database query.
