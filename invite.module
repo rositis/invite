@@ -1316,7 +1316,7 @@ function invite_save($edit) {
  *   A string denoting the orginating status page to return the user to
  *   afterwards.
  */
-function invite_cancel(&$form_state, $invite) {
+function invite_cancel($form, &$form_state, $invite) {
   global $user;
 
   // Inviter must be the current user.
