@@ -357,7 +357,7 @@ function invite_form_alter(&$form, &$form_state, $form_id) {
       // has overridden the menu access handler for the user registration form.
       $item = menu_get_item('user/register');
       if (in_array($item['access_callback'], array('user_register_access', 'invite_user_register_access'))) {
-        $form['registration']['user_register']['#options']['1-inviteonly'] = t('New user registration by invitation only.');
+        $form['registration_cancellation']['user_register']['#options']['1-inviteonly'] = t('New user registration by invitation only');
       }
       // Clear menu cache on submit to allow our custom access handler to
       // snap in.
@@ -478,7 +478,7 @@ function invite_user_insert(&$edit, &$account, $category) {
   if ($invite) {
     // Process the invitation and assign target roles to the user. These
     // will be saved by user_save().
-    $roles = invite_process($invite, $account);
+    $roles = invite_process_invite($invite, $account);
 
     if ($roles) {
       if (!isset($edit['roles']) || !is_array($edit['roles'])) {
