@@ -1038,7 +1038,8 @@ function _invite_get_emails($string) {
   $ipv6 = '[0-9a-fA-F]{1,4}(\:[0-9a-fA-F]{1,4}){7}';
   $rx = "/($user@($domain|(\[($ipv4|$ipv6)\])))>?$/";
 
-  $emails = array_unique(explode("[,\n\r]", drupal_strtolower($string)));
+  $emails = str_replace(array("\n", "\r"), ',', drupal_strtolower($string));
+  $emails = array_filter(array_unique(explode(',', $emails)));
   foreach ($emails as $email) {
     $email = preg_replace('/^.*<(.*)>$/', '${1}', trim($email));
     if ($email) {
