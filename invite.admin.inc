@@ -191,6 +191,8 @@ function invite_admin_overview() {
     t('Remaining'),
     t('Operations'),
   );
+  
+  $query = array();
 
   $result = db_select('invite', 'i')
     ->fields('i', array('uid'))
@@ -200,24 +202,21 @@ function invite_admin_overview() {
   $result->fields('u1', array('name'));
   $result->addExpression('COUNT(*)', 'invites');
 
-  $filter = $filter_args = $query = NULL;
-  $output = render(drupal_get_form('invite_admin_filter_form'));
-  
   if (isset($_SESSION[INVITE_ADMIN_SESSION])) {
-    $result->innerJoin('users', 'u2', 'u2.uid = i.invite');
-    $result->where("LOWER(u2.name) LIKE LOWER('%s%%')");
+    $result->innerJoin('users', 'u2', 'u2.uid = i.invitee');
+    $result->where("LOWER(u2.name) LIKE CONCAT('%', LOWER(:name), '%')", array(':name' => $_SESSION[INVITE_ADMIN_SESSION]));
 
-    $filter_args = $_SESSION[INVITE_ADMIN_SESSION];
-    $query = 'filter=' . $filter_args;
+    $query = array('filter' => $_SESSION[INVITE_ADMIN_SESSION]);
     unset($_SESSION[INVITE_ADMIN_SESSION]);
   }
-  //$result = db_query("SELECT i.uid, u1.name, COUNT(*) AS invites, u1.data FROM {invite} i INNER JOIN {users} u1 ON u1.uid = i.uid" . $filter . " GROUP BY i.uid, u1.name, u1.data");
 
   $result->groupBy('i.uid');
   $result->groupBy('u1.name');
   $result->groupBy('u1.data');
   $result->orderByHeader($header);
   $result = $result->execute()->fetchAll();
+
+  $output = render(drupal_get_form('invite_admin_filter_form'));
 
   $rows = array();
   foreach ($result as $row) {
@@ -271,8 +270,11 @@ function invite_admin_filter_form() {
 }
 
 function invite_admin_filter_form_submit($form, &$form_state) {
-  if ($form_state['values']['filter']) {
+  if (!empty($form_state['values']['filter'])) {
     $_SESSION[INVITE_ADMIN_SESSION] = $form_state['values']['filter'];
+  }
+  else {
+    unset($_SESSION[INVITE_ADMIN_SESSION]);
   }
 }
 
@@ -299,12 +301,10 @@ function invite_admin_details($account) {
   $result->condition('i.uid', $account->uid);
 
   $output = '';
-  $filter = $filter_args = NULL;
   if (isset($_GET['filter']) && $_GET['filter'] != '') {
-    $results->where("LOWER(u.name) LIKE '%s%%'");
-    //$filter = " AND LOWER(u.name) LIKE '%s%%'";
-    $filter_args = $_GET['filter'];
-    $output .= drupal_get_form('invite_admin_details_filter_form', $account->uid, $_GET['filter']);
+    $result->where("LOWER(u.name) LIKE CONCAT('%', LOWER(:name), '%')", array(':name' => $_GET['filter']));
+
+    $output .= render(drupal_get_form('invite_admin_details_filter_form', $account->uid, $_GET['filter']));
   }
 
   $result = $result->orderByHeader($header)
@@ -357,8 +357,8 @@ function invite_sort_by_status($a, $b) {
   return $status_a < $status_b ? -1 : ($status_a > $status_b ? 1 : 0); 
 }
 
-function invite_admin_details_filter_form($uid, $filter) {
-  $form['#action'] = "admin/user/invite/details/$uid";
+function invite_admin_details_filter_form($form, &$form_state, $uid, $filter) {
+  $form['#action'] = "/admin/config/people/invite/details/$uid";
   $form['filter'] = array(
     '#type' => 'fieldset',
     '#title' => t('Filter'),
@@ -366,9 +366,7 @@ function invite_admin_details_filter_form($uid, $filter) {
     '#suffix' => '</div>',
   );
   $form['filter']['filter'] = array(
-    '#type' => 'item',
-    '#title' => t('Active filter'),
-    '#value' => check_plain($filter),
+    '#markup' => check_plain($filter),
   );
   $form['filter']['op'] = array(
     '#type' => 'button',
