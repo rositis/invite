@@ -1299,7 +1299,7 @@ function invite_save($edit) {
   $data = serialize($edit['data']);
   $expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
   if ($edit['resent']) {
-    $result = db_query("UPDATE {invite} SET expiry = :expiry, resent = :resent, data = :data WHERE reg_code = :reg_code AND uid = :uid", array(':expiry' => $expiry, ':resent' => $edit['resent'], ':data' => $data, ':reg_code' => $edit['code'], ':inviter' => $edit['inviter']->uid));
+    $result = db_query("UPDATE {invite} SET expiry = :expiry, resent = :resent, data = :data WHERE reg_code = :reg_code AND uid = :uid", array(':expiry' => $expiry, ':resent' => $edit['resent'], ':data' => $data, ':reg_code' => $edit['code'], ':uid' => $edit['inviter']->uid));
   }
   else {
     $result = db_query("INSERT INTO {invite} (reg_code, email, uid, created, expiry, data) VALUES (:reg_code, :email, :uid, :created, :expiry, :data)", array(':reg_code' => $edit['code'], ':email' => $edit['email'], ':uid' => $edit['inviter']->uid, ':created' => REQUEST_TIME, ':expiry' => $expiry, ':data' => $data));
