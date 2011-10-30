@@ -842,10 +842,14 @@ function invite_page_form($remaining_invites, $edit = array()) {
     );
   }
   else {
-    $form['subject'] = array(
+    $form['subject-item'] = array(
       '#type' => 'item',
       '#title' => t('Subject'),
       '#markup' => check_plain($subject),
+    );
+    $form['subject'] = array(
+      '#type' => 'value',
+      '#value' => $subject,
     );
   }
 
@@ -930,6 +934,7 @@ function theme_invite_form($variables) {
       $output .= drupal_render($form['email_markup']);
     }
     $output .= drupal_render($form['email']);
+    $output .= drupal_render($form['subject-item']);
     $output .= drupal_render($form['subject']);
 
     // Show complete invitation message.
