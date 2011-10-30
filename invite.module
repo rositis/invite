@@ -463,33 +463,11 @@ function invite_validate($invite) {
 /**
  * Implements hook_user_insert().
  */
-function invite_user_insert(&$edit, &$account, $category) {
-  $invite = invite_load_from_session();
+function invite_user_insert(&$edit, $account, $category) {
+  $invite = invite_find_invite($account->mail);
 
-  if (!$invite) {
-    // Try to look up an invitation in case a user has been invited to join
-    // the site, but did go straight to the site and signed up without
-    // using the invite link.
-    $code = db_query("SELECT reg_code FROM {invite} WHERE email = :reg_code", array(':reg_code' => $account->mail))->fetchField();
-    if ($code) {
-      $invite = invite_load($code);
-    }
-  }
   if ($invite) {
-    // Process the invitation and assign target roles to the user. These
-    // will be saved by user_save().
-    $roles = invite_process_invite($invite, $account);
-
-    if ($roles) {
-      if (!isset($edit['roles']) || !is_array($edit['roles'])) {
-        $edit['roles'] = array();
-      }
-      $edit['roles'] += $roles;
-
-      // We need to notify other modules of the role change, otherwise they
-      // will be unaware of it.
-      user_module_invoke('update', $edit, $account);
-    }
+    invite_process_invite($invite, $account);
 
     // Flag the inviting user, this triggers status notifications and
     // saves us some queries otherwise.
@@ -504,10 +482,58 @@ function invite_user_insert(&$edit, &$account, $category) {
 }
 
 /**
+ * Implements hook_user_presave().
+ */
+function invite_user_presave(&$edit, $account, $category) {
+  if ($account->is_new) {
+    $invite = invite_find_invite($account->mail);
+    
+    if ($invite) {
+      $roles = invite_target_roles($invite);
+      
+      if ($roles) {  
+        if (!isset($edit['roles']) || !is_array($edit['roles'])) {
+          $edit['roles'] = array();
+        }
+        foreach ($roles as $role) {
+          $edit['roles'][$role] = $role;
+        }
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_user_cancel().
  */
 function invite_user_cancel($edit, $account, $method) {
   invite_delete($account->uid);
+}
+
+/**
+ * Finds the invitation to assign to the new account when the
+ * user is registering.
+ *
+ * @param $mail
+ *   The email address that is about to be registered.
+ * @return
+ *   An invite object.
+ */
+function invite_find_invite($mail) {
+  $invite = invite_load_from_session();
+
+  if (!$invite) {
+    // Try to look up an invitation in case a user has been invited to join
+    // the site, but did go straight to the site and signed up without
+    // using the invite link.
+    $code = db_query("SELECT reg_code FROM {invite} WHERE email = :mail", array(':mail' => $mail))->fetchField();
+    if ($code) {
+      $_SESSION[INVITE_SESSION] = $code;
+      $invite = invite_load($code);
+    }
+  }
+  
+  return $invite;
 }
 
 /**
@@ -517,8 +543,6 @@ function invite_user_cancel($edit, $account, $method) {
  *   An invite object.
  * @param $account
  *   The user object that accepted the invitation.
- * @return
- *   Array of target roles for the invited user.
  */
 function invite_process_invite($invite, $account) {
   // Update the invitation record.
@@ -535,13 +559,14 @@ function invite_process_invite($invite, $account) {
   db_query("UPDATE {users} SET status = 1 WHERE uid = :uid", array(':uid' => $account->uid));
 
   // Determine target roles for invited user.
-  $roles = invite_target_roles($invite);
-
+  //$roles = invite_target_roles($invite);
+  //
   // Allow other modules to act on the role escalation.
-  $args = array('invitee' => $account, 'inviter' => $invite->inviter, 'roles' => &$roles);
-  module_invoke_all('invite', 'escalate', $args);
+  //$args = array('invitee' => $account, 'inviter' => $invite->inviter, 'roles' => &$roles);
+  //module_invoke_all('invite', 'escalate', $args);
+  // No actual escalation happens here - comment out for now.
 
-  return $roles;
+  //return $roles;
 }
 
 /**
@@ -554,15 +579,16 @@ function invite_process_invite($invite, $account) {
  */
 function invite_target_roles($invite) {
   $targets = array();
-
-  // Add a dummy entry to retrieve the default target role setting.
-  $roles = array('default' => 'default');
+  $roles = array();
 
   // Add roles of inviter.
   if ($invite->inviter) {
-    $roles = array_merge($roles, array_intersect($invite->inviter->roles, user_roles(FALSE, 'send invitations')));
+    $roles = array_intersect($invite->inviter->roles, user_roles(TRUE, 'send invitations'));
   }
 
+  // Add a dummy entry to retrieve the default target role setting.
+  $roles['default'] = 'default';
+  
   // Map to configured target roles.
   foreach ($roles as $rid => $role) {
     $target = variable_get('invite_target_role_' . $rid, DRUPAL_AUTHENTICATED_RID);
