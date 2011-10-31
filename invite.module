@@ -931,7 +931,7 @@ function invite_block_form($remaining_invites) {
   );
   $form['link'] = array(
     '#prefix' => '<div><small>',
-    '#value' => l(t('View your invites'), "user/$user->uid/invites"),
+    '#markup' => l(t('View your invites'), "user/$user->uid/invites"),
     '#suffix' => '</small></div>',
     '#access' => user_access('track invitations') && $user->uid,
   );
