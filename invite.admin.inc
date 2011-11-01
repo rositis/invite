@@ -202,10 +202,17 @@ function invite_admin_overview() {
   $result->fields('u1', array('name'));
   $result->addExpression('COUNT(*)', 'invites');
 
+  $count_query = db_select('invite', 'i');
+  $count_query->innerJoin('users', 'u1', 'u1.uid = i.uid');
+  $count_query->addExpression('COUNT(DISTINCT i.uid)', 'count');
+
   if (isset($_SESSION[INVITE_ADMIN_SESSION])) {
     $result->innerJoin('users', 'u2', 'u2.uid = i.invitee');
     $result->where("LOWER(u2.name) LIKE CONCAT('%', LOWER(:name), '%')", array(':name' => $_SESSION[INVITE_ADMIN_SESSION]));
 
+    $count_query->innerJoin('users', 'u2', 'u2.uid = i.invitee');
+    $count_query->where("LOWER(u2.name) LIKE CONCAT('%', LOWER(:name), '%')", array(':name' => $_SESSION[INVITE_ADMIN_SESSION]));
+    
     $query = array('filter' => $_SESSION[INVITE_ADMIN_SESSION]);
     unset($_SESSION[INVITE_ADMIN_SESSION]);
   }
@@ -213,6 +220,9 @@ function invite_admin_overview() {
   $result->groupBy('i.uid');
   $result->groupBy('u1.name');
   $result->groupBy('u1.data');
+
+  $result->setCountQuery($count_query);
+
   $result->orderByHeader($header);
   $result = $result->execute()->fetchAll();
 
