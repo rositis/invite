@@ -17,6 +17,14 @@ define('INVITE_ADMIN_SESSION', 'invite_admin_filter');
 define('INVITE_UNLIMITED', -1);
 
 /**
+ * Validity constants.
+ */
+define('INVITE_VALID', 1);
+define('INVITE_WITHDRAWN', 2);
+define('INVITE_USED', 3);
+define('INVITE_EXPIRED', 4);
+  
+/**
  * Implements hook_help().
  */
 function invite_help($path, $arg) {
@@ -252,17 +260,9 @@ function invite_user_registration_by_invite_only() {
  * Access callback; determine access to user registration form.
  */
 function invite_user_register_access() {
-  $invite = invite_load_from_session();
+  $invite = invite_load_from_context();
 
-  // Legacy url support (user/register/regcode).
-  if (!$invite && $code = arg(2)) {
-    if ($invite = invite_load($code)) {
-      if (invite_validate($invite)) {
-        $_SESSION[INVITE_SESSION] = $invite->reg_code;
-      }
-    }
-  }
-  if (!$invite && !user_access('administer users')) {
+  if ((empty($invite) || invite_validate($invite) != INVITE_VALID) && !user_access('administer users')) {
     // The menu system checks access whenever local tasks are displayed. Make
     // sure the message is output only for the path user/register.
     if (arg(1) == 'register') {
@@ -333,9 +333,26 @@ function invite_notify($uid) {
 function invite_accept($invite) {
   global $user;
 
-  if (!$user->uid && invite_validate($invite)) {
+  $status = invite_validate($invite);
+  
+  if (!$user->uid && $status == INVITE_VALID) {
     $_SESSION[INVITE_SESSION] = $invite->reg_code;
     drupal_goto(variable_get('invite_registration_path', 'user/register'));
+  }
+  else {
+    switch ($status) {
+      case INVITE_WITHDRAWN:
+        drupal_set_message(t('This invitation has been withdrawn.'));
+        break;
+
+      case INVITE_USED:
+        drupal_set_message(t('This invitation has already been used.'));
+        break;
+
+      case INVITE_EXPIRED:
+        drupal_set_message(t('This invitation has expired.'));
+        break;
+    }
   }
 
   drupal_goto();
@@ -369,17 +386,9 @@ function invite_form_alter(&$form, &$form_state, $form_id) {
       // disable caching for user/register.
       $GLOBALS['conf']['cache'] = FALSE;
 
-      $invite = invite_load_from_session();
+      $invite = invite_load_from_context();
 
-      // Legacy url support (user/register/regcode).
-      if (!$invite && $code = arg(2)) {
-        if ($invite = invite_load($code)) {
-          if (invite_validate($invite)) {
-            $_SESSION[INVITE_SESSION] = $invite->reg_code;
-          }
-        }
-      }
-      if ($invite) {
+      if (!empty($invite) && invite_validate($invite) == INVITE_VALID) {
         // Preset the e-mail field.
         if (isset($form['account'])) {
           $field = &$form['account'];
@@ -422,7 +431,6 @@ function invite_load($code) {
     $invite = db_select('invite', 'i')
       ->fields('i')
       ->condition('reg_code', $code)
-      ->condition('canceled', 0)
       ->execute()
       ->fetchObject();
 
@@ -441,42 +449,50 @@ function invite_load($code) {
 }
 
 /**
- * Returns an invite record from an invite code stored in the user's session.
+ * Returns an invite object from an invite code stored in the user's session.
  *
  * @return
- *   An invite record, or FALSE if there is no invite code stored in the
- *   user's session.
+ *   An invite object, or FALSE if no invite code can be found.
  */
-function invite_load_from_session() {
+function invite_load_from_context() {
   if (isset($_SESSION[INVITE_SESSION])) {
-    return invite_load($_SESSION[INVITE_SESSION]);
+    $invite = invite_load($_SESSION[INVITE_SESSION]);
+  }  
+  // Legacy url support (user/register/regcode).
+  else if (arg(0) == 'user' && arg(1) == 'register' && $code = arg(2)) {
+    if ($invite = invite_load($code)) {
+      $_SESSION[INVITE_SESSION] = $invite->reg_code;
+    }
   }
-  return FALSE;
+  
+  if (!empty($invite)) {
+    return $invite;
+  }
+  else {
+    return FALSE;
+  }
 }
 
 /**
- * Validates an invite record.
+ * Checks the status of an invite.
  *
  * @param $invite
- *   An invite record as returned by invite_load().
+ *   An invite object as returned by invite_load().
  * @return
- *   TRUE if the invite is valid, otherwise this function won't return.
+ *   The constant corresponding to the status of the invite.
  */
 function invite_validate($invite) {
-  if (!$invite || !$invite->inviter) {
-    drupal_set_message(t('This invitation has been withdrawn.'));
-    drupal_goto();
+  if (!$invite || $invite->canceled != 0) {
+    return INVITE_WITHDRAWN;
   }
   elseif ($invite->joined != 0) {
-    drupal_set_message(t('This invitation has already been used. Please login now with your username and password.'));
-    drupal_goto('user');
+    return INVITE_USED;
   }
   elseif ($invite->expiry < REQUEST_TIME) {
-    drupal_set_message(t('Sorry, this invitation has expired.'));
-    drupal_goto();
+    return INVITE_EXPIRED;
   }
   else {
-    return TRUE;
+    return INVITE_VALID;
   }
 }
 
@@ -540,7 +556,7 @@ function invite_user_cancel($edit, $account, $method) {
  *   An invite object.
  */
 function invite_find_invite($mail) {
-  $invite = invite_load_from_session();
+  $invite = invite_load_from_context();
 
   if (!$invite) {
     // Try to look up an invitation in case a user has been invited to join
