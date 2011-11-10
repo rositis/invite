@@ -413,11 +413,31 @@ function invite_form_alter(&$form, &$form_state, $form_id) {
  *   An invite record.
  */
 function invite_load($code) {
-  if ($invite = db_query("SELECT * FROM {invite} WHERE reg_code = :reg_code AND canceled = 0", array(':reg_code' => $code))->fetch()) {
-    $invite->inviter = user_load($invite->uid);
-    $invite->data = (array) unserialize($invite->data);
+  $invites = &drupal_static(__FUNCTION__);
+  if (!isset($invites)) {
+    $invites = array();
   }
-  return $invite;
+  
+  if (!isset($invites[$code])) {
+    $invite = db_select('invite', 'i')
+      ->fields('i')
+      ->condition('reg_code', $code)
+      ->condition('canceled', 0)
+      ->execute()
+      ->fetchObject();
+
+    if ($invite) {
+      $invite->inviter = user_load($invite->uid);
+      $invite->data = unserialize($invite->data);
+      
+      $invites[$code] = $invite;
+    }
+    else {
+      return FALSE;
+    }
+  }
+
+  return $invites[$code];
 }
 
 /**
@@ -1213,12 +1233,15 @@ function invite_form_submit($form, &$form_state) {
   foreach ($form_state['values']['valid_emails'] as $email) {
     // Create the invite object.
     $code = $form_state['values']['reg_code'] ? $form_state['values']['reg_code'] : invite_generate_code();
-    $invite = _invite_substitutions(array(
+    
+    $invite = (object) array(
+      'reg_code'  => $code,
       'email' => $email,
-      'code'  => $code,
+      'uid' => $user->uid,
+      'expiry' => REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24),
       'resent'  => $form_state['values']['resent'],
       'data'  => array('subject' => $subject, 'message' => $message),
-    ));
+    );
 
     // Send e-mail.
     $params = array('invite' => $invite);
@@ -1229,8 +1252,7 @@ function invite_form_submit($form, &$form_state) {
 
       // Notify other modules.
       if (!$form_state['values']['resent']) {
-        $args = array('inviter' => $invite->inviter, 'email' => $invite->email, 'code' => $invite->code);
-        module_invoke_all('invite', 'invite', $args);
+        module_invoke_all('invite', 'invite', $invite);
       }
 
       $num_succeeded++;
@@ -1325,17 +1347,23 @@ function invite_mail($key, &$message, $params) {
  * @return
  *   The result of the database operation.
  */
-function invite_save($edit) {
-  $edit = (array) $edit;
-  $data = serialize($edit['data']);
-  $expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
-  if ($edit['resent']) {
-    $result = db_query("UPDATE {invite} SET expiry = :expiry, resent = :resent, data = :data WHERE reg_code = :reg_code AND uid = :uid", array(':expiry' => $expiry, ':resent' => $edit['resent'], ':data' => $data, ':reg_code' => $edit['code'], ':uid' => $edit['inviter']->uid));
+function invite_save(&$invite) {
+  $invite->is_new = empty($invite->iid);
+  
+  $data = $invite->data;
+  $invite->data = serialize($data);
+  
+  if (!$invite->is_new) {
+    drupal_write_record('invite', $invite, 'iid');
   }
   else {
-    $result = db_query("INSERT INTO {invite} (reg_code, email, uid, created, expiry, data) VALUES (:reg_code, :email, :uid, :created, :expiry, :data)", array(':reg_code' => $edit['code'], ':email' => $edit['email'], ':uid' => $edit['inviter']->uid, ':created' => REQUEST_TIME, ':expiry' => $expiry, ':data' => $data));
+    $invite->created = REQUEST_TIME;    
+    drupal_write_record('invite', $invite);
   }
-  return $result;
+  
+  $invite->data = $data;
+  $invite->inviter = user_load($invite->uid);
+  return $invite;
 }
 
 /**
@@ -1490,11 +1518,10 @@ function _invite_token_types($args = array()) {
  */
 function _invite_substitutions($args = array()) {
   global $user;
-
   $defaults = array(
     'inviter' => $user,
     'email'   => '--recipient-email--',
-    'code'    => '--invite-code--',
+    'reg_code'    => '--invite-code--',
     'resent'  => 0,
     'data'    => array('subject' => NULL, 'message' => NULL),
   );

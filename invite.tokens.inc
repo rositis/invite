@@ -35,7 +35,7 @@ function invite_tokens($type, $tokens, array $data = array(), array $options = a
           break;
 
         case 'join-link':
-          $replacements[$original] = url('invite/accept/' . $invite->code, array('absolute' => TRUE));
+          $replacements[$original] = url('invite/accept/' . $invite->reg_code, array('absolute' => TRUE));
           break;
         
       }
