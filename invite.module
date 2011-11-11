@@ -190,6 +190,7 @@ function invite_menu() {
   $items['user/%user/invites'] = array(
     'title' => 'Invitations',
     'page callback' => 'invite_user_overview',
+    'page arguments' => array('accepted', 1),
     'access callback' => 'invite_user_access',
     'access arguments' => array('track invitations', 1),
     'type' => MENU_LOCAL_TASK,
@@ -198,7 +199,7 @@ function invite_menu() {
   $items['user/%user/invites/accepted'] = array(
     'title' => 'Accepted',
     'page callback' => 'invite_user_overview',
-    'page arguments' => array('accepted'),
+    'page arguments' => array('accepted', 1),
     'access callback' => 'invite_user_access',
     'access arguments' => array('track invitations', 1),
     'type' => MENU_DEFAULT_LOCAL_TASK,
@@ -208,7 +209,7 @@ function invite_menu() {
   $items['user/%user/invites/pending'] = array(
     'title' => 'Pending',
     'page callback' => 'invite_user_overview',
-    'page arguments' => array('pending'),
+    'page arguments' => array('pending', 1),
     'access callback' => 'invite_user_access',
     'access arguments' => array('track invitations', 1),
     'type' => MENU_LOCAL_TASK,
@@ -217,7 +218,7 @@ function invite_menu() {
   $items['user/%user/invites/expired'] = array(
     'title' => 'Expired',
     'page callback' => 'invite_user_overview',
-    'page arguments' => array('expired'),
+    'page arguments' => array('expired', 1),
     'access callback' => 'invite_user_access',
     'access arguments' => array('track invitations', 1),
     'type' => MENU_LOCAL_TASK,
@@ -304,7 +305,16 @@ function invite_admin_details_page_title($account) {
  *   A user object.
  */
 function invite_user_access($permission, $account) {
-  return ($account->uid == $GLOBALS['user']->uid && user_access($permission));
+  global $user;
+  
+  if ($permission == 'send invitations' && $user->uid != $account->uid) {
+    return FALSE;
+  }
+  if (user_access('administer users')) {
+    return TRUE;
+  }
+
+  return ($user->uid == $account->uid && user_access($permission));
 }
 
 /**

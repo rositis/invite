@@ -392,7 +392,7 @@ function invite_admin_details_filter_form($form, &$form_state, $uid, $filter) {
  * @param $page
  *   Which invites to list: accepted, pending, or expired.
  */
-function invite_user_overview($page = 'accepted') {
+function invite_user_overview($page, $account) {
   global $user;
 
   $rows = array();
@@ -402,7 +402,7 @@ function invite_user_overview($page = 'accepted') {
   $query = db_select('invite', 'i')
     ->fields('i')
     ->extend('PagerDefault')
-    ->condition('i.uid', $user->uid)
+    ->condition('i.uid', $account->uid)
     ->condition('canceled', 0);
 
   switch ($page) {
@@ -448,7 +448,6 @@ function invite_user_overview($page = 'accepted') {
         }
         $row[] = $account_exists ? t('Accepted') : t('Deleted');
         $row[] = $allow_delete ? l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => drupal_get_destination())) : '';
-        $row[] = '';
         break;
 
       case 'pending':
@@ -457,8 +456,8 @@ function invite_user_overview($page = 'accepted') {
 
         $row[] = check_plain($invite->email);
         $row[] = $expired ? t('Expired') : t('Pending');
-        $row[] = l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => drupal_get_destination()));
-        $row[] = $expired ? l(t('resend'), "invite/resend/$invite->reg_code") : '';
+        $row[] = l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => drupal_get_destination())) .
+          ($expired ? ' | ' . l(t('resend'), "invite/resend/$invite->reg_code") : '');
         break;
     }
     $rows[] = $row;
@@ -478,7 +477,7 @@ function invite_user_overview($page = 'accepted') {
 function theme_invite_user_overview($variables) {
   $items = $variables['items'];
   if (count($items) > 0) {
-    $headers = array(t('E-mail'), t('Status'), array('data' => t('Operations'), 'colspan' => 2));
+    $headers = array(t('E-mail'), t('Status'), t('Operations'));
     $output  = theme('table', array('header' => $headers, 'rows' => $items, 'attributes' => array('id' => 'invites')));
     $output .= theme('pager');
   }
