@@ -1257,18 +1257,27 @@ function invite_form_submit($form, &$form_state) {
   }
 
   foreach ($form_state['values']['valid_emails'] as $email) {
-    // Create the invite object.
-    $code = $form_state['values']['reg_code'] ? $form_state['values']['reg_code'] : invite_generate_code();
+    // Create or load the invite object.
+    if (!empty($form_state['values']['reg_code'])) {
+      $invite = invite_load($form_state['values']['reg_code']);
+      
+      $invite->expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
+      $invite->resent = $form_state['values']['resent'];
+      $invite->data = array('subject' => $subject, 'message' => $message);
+    }
+    else {
+      $code = invite_generate_code();
+      
+      $invite = (object) array(
+        'reg_code'  => $code,
+        'email' => $email,
+        'uid' => $user->uid,
+        'expiry' => REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24),
+        'resent'  => $form_state['values']['resent'],
+        'data'  => array('subject' => $subject, 'message' => $message),
+      );
+    }
     
-    $invite = (object) array(
-      'reg_code'  => $code,
-      'email' => $email,
-      'uid' => $user->uid,
-      'expiry' => REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24),
-      'resent'  => $form_state['values']['resent'],
-      'data'  => array('subject' => $subject, 'message' => $message),
-    );
-
     // Send e-mail.
     $params = array('invite' => $invite);
     $result = drupal_mail('invite', 'invite', $email, $language, $params, $from, TRUE);
@@ -1462,7 +1471,7 @@ function invite_resend($invite) {
     return drupal_get_form('invite_form', 'page', $invite);
   }
 
-  return drupal_access_denied();
+  return MENU_ACCESS_DENIED;
 }
 
 /**
