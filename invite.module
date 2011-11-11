@@ -125,24 +125,20 @@ function invite_init() {
  */
 function invite_menu() {
   // Admin menu items
-  $items['admin/config/people/invite'] = array(
+  $items['admin/people/invites'] = array(
     'title' => 'Invites',
     'page callback' => 'invite_admin_overview',
     'access arguments' => array('administer invitations'),
-    'type' => MENU_NORMAL_ITEM,
+    'type' => MENU_LOCAL_TASK,
     'file' => 'invite.admin.inc',
   );
-  $items['admin/config/people/invite/list'] = array(
-    'title' => 'Inviters',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => -10,
-  );
-  $items['admin/config/people/invite/settings'] = array(
-    'title' => 'Settings',
+  $items['admin/config/people/invite'] = array(
+    'title' => 'Invite',
+    'description' => 'Modify invitation settings.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('invite_settings'),
     'access arguments' => array('administer invitations'),
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_NORMAL_ITEM,
     'weight' => 10,
     'file' => 'invite.admin.inc',
   );
