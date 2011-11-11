@@ -1443,16 +1443,6 @@ function invite_count($uid, $op) {
 }
 
 /**
- * Implements hook_disable().
- */
-function invite_disable() {
-  if (invite_user_registration_by_invite_only()) {
-    variable_set('user_register', 1);
-    drupal_set_message(t('User registration option reset to %no_approval.', array('%no_approval' => t('Visitors can create accounts and no administrator approval is required.'))));
-  }
-}
-
-/**
  * Returns the configured or default e-mail template.
  *
  * @return
