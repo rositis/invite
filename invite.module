@@ -75,7 +75,7 @@ function invite_theme() {
     ),
     'invite_user_overview' => array(
       'variables' => array('items' => NULL),
-      'file' => 'invite.admin.inc',
+      'file' => 'invite.pages.inc',
     ),
   );
 }
@@ -171,6 +171,7 @@ function invite_menu() {
     'page arguments' => array(2),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
+    'file' => 'invite.pages.inc',
   );
   $items['invite/withdraw/%invite'] = array(
     'page callback' => 'drupal_get_form',
@@ -184,6 +185,7 @@ function invite_menu() {
     'page arguments' => array(2),
     'access arguments' => array('send invitations'),
     'type' => MENU_CALLBACK,
+    'file' => 'invite.pages.inc',
   );
 
   // User profile tabs
@@ -194,7 +196,7 @@ function invite_menu() {
     'access callback' => 'invite_user_access',
     'access arguments' => array('track invitations', 1),
     'type' => MENU_LOCAL_TASK,
-    'file' => 'invite.admin.inc',
+    'file' => 'invite.pages.inc',
   );
   $items['user/%user/invites/accepted'] = array(
     'title' => 'Accepted',
@@ -204,7 +206,7 @@ function invite_menu() {
     'access arguments' => array('track invitations', 1),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -5,
-    'file' => 'invite.admin.inc',
+    'file' => 'invite.pages.inc',
   );
   $items['user/%user/invites/pending'] = array(
     'title' => 'Pending',
@@ -213,7 +215,7 @@ function invite_menu() {
     'access callback' => 'invite_user_access',
     'access arguments' => array('track invitations', 1),
     'type' => MENU_LOCAL_TASK,
-    'file' => 'invite.admin.inc',
+    'file' => 'invite.pages.inc',
   );
   $items['user/%user/invites/expired'] = array(
     'title' => 'Expired',
@@ -223,7 +225,7 @@ function invite_menu() {
     'access arguments' => array('track invitations', 1),
     'type' => MENU_LOCAL_TASK,
     'weight' => 5,
-    'file' => 'invite.admin.inc',
+    'file' => 'invite.pages.inc',
   );
   $items['user/%user/invites/new'] = array(
     'title' => 'New invitation',
@@ -332,40 +334,6 @@ function invite_notify($uid) {
       db_query("DELETE FROM {invite_notifications} WHERE uid = :uid AND invitee = :invitee", array(':uid' => $uid, ':invitee' => $row->invitee));
     }
   }
-}
-
-/**
- * Menu callback; handle incoming requests for accepting an invite.
- *
- * @param $invite
- *   A (unvalidated) invite object.
- */
-function invite_accept($invite) {
-  global $user;
-
-  $status = invite_validate($invite);
-  
-  if (!$user->uid && $status == INVITE_VALID) {
-    $_SESSION[INVITE_SESSION] = $invite->reg_code;
-    drupal_goto(variable_get('invite_registration_path', 'user/register'));
-  }
-  else {
-    switch ($status) {
-      case INVITE_WITHDRAWN:
-        drupal_set_message(t('This invitation has been withdrawn.'));
-        break;
-
-      case INVITE_USED:
-        drupal_set_message(t('This invitation has already been used.'));
-        break;
-
-      case INVITE_EXPIRED:
-        drupal_set_message(t('This invitation has expired.'));
-        break;
-    }
-  }
-
-  drupal_goto();
 }
 
 /**
@@ -504,6 +472,33 @@ function invite_validate($invite) {
   else {
     return INVITE_VALID;
   }
+}
+
+/**
+ * Save an invite to the database.
+ *
+ * @param $edit
+ *   Associative array of data to store.
+ * @return
+ *   The result of the database operation.
+ */
+function invite_save(&$invite) {
+  $invite->is_new = empty($invite->iid);
+  
+  $data = $invite->data;
+  $invite->data = serialize($data);
+  
+  if (!$invite->is_new) {
+    drupal_write_record('invite', $invite, 'iid');
+  }
+  else {
+    $invite->created = REQUEST_TIME;    
+    drupal_write_record('invite', $invite);
+  }
+  
+  $invite->data = $data;
+  $invite->inviter = user_load($invite->uid);
+  return $invite;
 }
 
 /**
@@ -1095,6 +1090,102 @@ function invite_form_validate($form, &$form_state) {
 }
 
 /**
+ * Forms API callback; process submitted form data.
+ */
+function invite_form_submit($form, &$form_state) {
+  global $user, $language;
+
+  // Set this now, so other modules can change it later.
+  $form_state['redirect'] = 'invite';
+
+  $failed_emails = array();
+  $num_failed = $num_succeeded = 0;
+
+  // Get e-mails that failed validation.
+  if (isset($_SESSION['invite_failed_emails'])) {
+    $failed_emails = (array) unserialize($_SESSION['invite_failed_emails']);
+    $num_failed = count($failed_emails);
+  }
+
+  $subject = isset($form_state['values']['subject']) ? trim($form_state['values']['subject']) : invite_get_subject();
+  $message = isset($form_state['values']['message']) ? trim($form_state['values']['message']) : NULL;
+
+  if (!variable_get('invite_use_users_email', 0)) {
+    $from = variable_get('invite_manual_from', '');
+  }
+  elseif ($user->uid) {
+    $from = $user->mail;
+  }
+  if (!$from) {
+    // Never pass an empty string to drupal_mail()
+    $from = NULL;
+  }
+
+  foreach ($form_state['values']['valid_emails'] as $email) {
+    // Create or load the invite object.
+    if (!empty($form_state['values']['reg_code'])) {
+      $invite = invite_load($form_state['values']['reg_code']);
+      
+      $invite->expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
+      $invite->resent = $form_state['values']['resent'];
+      $invite->data = array('subject' => $subject, 'message' => $message);
+    }
+    else {
+      $code = invite_generate_code();
+      
+      $invite = (object) array(
+        'reg_code'  => $code,
+        'email' => $email,
+        'uid' => $user->uid,
+        'expiry' => REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24),
+        'resent'  => $form_state['values']['resent'],
+        'data'  => array('subject' => $subject, 'message' => $message),
+      );
+    }
+    
+    // Send e-mail.
+    $params = array('invite' => $invite);
+    $result = drupal_mail('invite', 'invite', $email, $language, $params, $from, TRUE);
+    if ($result['result']) {
+      // Save invite.
+      invite_save($invite);
+
+      // Notify other modules.
+      if (!$form_state['values']['resent']) {
+        module_invoke_all('invite', 'invite', $invite);
+      }
+
+      $num_succeeded++;
+    }
+    else {
+      $failed_emails[] = $email;
+    }
+  }
+
+  // Store failed e-mails for re-display.
+  if ($failed_emails) {
+    $_SESSION['invite_failed_emails'] = serialize($failed_emails);
+  }
+
+  if ($num_succeeded) {
+    if (isset($form_state['values']['remaining_invites'])) {
+      // Update user property if user is limited.
+      user_save($user, array('invites' => $form_state['values']['remaining_invites'] - $num_succeeded));
+    }
+    $message = format_plural($num_succeeded, 'Your invitation has been successfully sent. You will be notified when the invitee joins the site.', '@count invitations have been successfully sent. You will be notified when any invitee joins the site.');
+    drupal_set_message($message);
+  }
+  if ($num_failed) {
+    $message = format_plural($num_failed, 'The entered e-mail address is invalid. Please correct it.', '@count entered e-mail addresses are invalid. Please correct them.');
+    drupal_set_message($message, 'error');
+  }
+  elseif (user_access('track invitations') && $user->uid) {
+    // Everything went well: redirect to pending invites page.
+    $form_state['redirect'] = "user/$user->uid/invites/pending";
+  }
+}
+
+/**
  * Extract valid e-mail addresses from a string.
  *
  * E-mails must be separated by newlines or commas. E-mails are allowed to
@@ -1225,102 +1316,6 @@ function _invite_validate_emails($sql, &$emails) {
 }
 
 /**
- * Forms API callback; process submitted form data.
- */
-function invite_form_submit($form, &$form_state) {
-  global $user, $language;
-
-  // Set this now, so other modules can change it later.
-  $form_state['redirect'] = 'invite';
-
-  $failed_emails = array();
-  $num_failed = $num_succeeded = 0;
-
-  // Get e-mails that failed validation.
-  if (isset($_SESSION['invite_failed_emails'])) {
-    $failed_emails = (array) unserialize($_SESSION['invite_failed_emails']);
-    $num_failed = count($failed_emails);
-  }
-
-  $subject = isset($form_state['values']['subject']) ? trim($form_state['values']['subject']) : invite_get_subject();
-  $message = isset($form_state['values']['message']) ? trim($form_state['values']['message']) : NULL;
-
-  if (!variable_get('invite_use_users_email', 0)) {
-    $from = variable_get('invite_manual_from', '');
-  }
-  elseif ($user->uid) {
-    $from = $user->mail;
-  }
-  if (!$from) {
-    // Never pass an empty string to drupal_mail()
-    $from = NULL;
-  }
-
-  foreach ($form_state['values']['valid_emails'] as $email) {
-    // Create or load the invite object.
-    if (!empty($form_state['values']['reg_code'])) {
-      $invite = invite_load($form_state['values']['reg_code']);
-      
-      $invite->expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
-      $invite->resent = $form_state['values']['resent'];
-      $invite->data = array('subject' => $subject, 'message' => $message);
-    }
-    else {
-      $code = invite_generate_code();
-      
-      $invite = (object) array(
-        'reg_code'  => $code,
-        'email' => $email,
-        'uid' => $user->uid,
-        'expiry' => REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24),
-        'resent'  => $form_state['values']['resent'],
-        'data'  => array('subject' => $subject, 'message' => $message),
-      );
-    }
-    
-    // Send e-mail.
-    $params = array('invite' => $invite);
-    $result = drupal_mail('invite', 'invite', $email, $language, $params, $from, TRUE);
-    if ($result['result']) {
-      // Save invite.
-      invite_save($invite);
-
-      // Notify other modules.
-      if (!$form_state['values']['resent']) {
-        module_invoke_all('invite', 'invite', $invite);
-      }
-
-      $num_succeeded++;
-    }
-    else {
-      $failed_emails[] = $email;
-    }
-  }
-
-  // Store failed e-mails for re-display.
-  if ($failed_emails) {
-    $_SESSION['invite_failed_emails'] = serialize($failed_emails);
-  }
-
-  if ($num_succeeded) {
-    if (isset($form_state['values']['remaining_invites'])) {
-      // Update user property if user is limited.
-      user_save($user, array('invites' => $form_state['values']['remaining_invites'] - $num_succeeded));
-    }
-    $message = format_plural($num_succeeded, 'Your invitation has been successfully sent. You will be notified when the invitee joins the site.', '@count invitations have been successfully sent. You will be notified when any invitee joins the site.');
-    drupal_set_message($message);
-  }
-  if ($num_failed) {
-    $message = format_plural($num_failed, 'The entered e-mail address is invalid. Please correct it.', '@count entered e-mail addresses are invalid. Please correct them.');
-    drupal_set_message($message, 'error');
-  }
-  elseif (user_access('track invitations') && $user->uid) {
-    // Everything went well: redirect to pending invites page.
-    $form_state['redirect'] = "user/$user->uid/invites/pending";
-  }
-}
-
-/**
  * Return the invite e-mail subject.
  *
  * @param $substitutions
@@ -1372,33 +1367,6 @@ function invite_mail($key, &$message, $params) {
   $template = t(_invite_get_mail_template());
   $tokens = _invite_token_types($invite);
   $message['body'][] = token_replace($template, $tokens);
-}
-
-/**
- * Save an invite to the database.
- *
- * @param $edit
- *   Associative array of data to store.
- * @return
- *   The result of the database operation.
- */
-function invite_save(&$invite) {
-  $invite->is_new = empty($invite->iid);
-  
-  $data = $invite->data;
-  $invite->data = serialize($data);
-  
-  if (!$invite->is_new) {
-    drupal_write_record('invite', $invite, 'iid');
-  }
-  else {
-    $invite->created = REQUEST_TIME;    
-    drupal_write_record('invite', $invite);
-  }
-  
-  $invite->data = $data;
-  $invite->inviter = user_load($invite->uid);
-  return $invite;
 }
 
 /**
@@ -1455,23 +1423,6 @@ function invite_cancel_submit($form, &$form_state) {
   // Notify other modules.
   $args = array('inviter' => $invite->inviter, 'email' => $invite->email, 'code' => $invite->reg_code);
   module_invoke_all('invite', 'cancel', $args);
-}
-
-/**
- * Menu callback; resend an expired invite.
- *
- * @param $invite
- *   An invitate object.
- */
-function invite_resend($invite) {
-  global $user;
-
-  // Inviter must match current user and invitation must have expired.
-  if ($invite->uid == $user->uid && $invite->expiry < REQUEST_TIME) {
-    return drupal_get_form('invite_form', 'page', $invite);
-  }
-
-  return MENU_ACCESS_DENIED;
 }
 
 /**
