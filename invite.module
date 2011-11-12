@@ -311,9 +311,10 @@ function invite_user_access($permission, $account) {
   global $user;
   
   if ($permission == 'send invitations' && $user->uid != $account->uid) {
+    // Show new invitation link on the user's own profile only.
     return FALSE;
   }
-  if (user_access('administer users')) {
+  if (user_access('administer invitations')) {
     return TRUE;
   }
 
