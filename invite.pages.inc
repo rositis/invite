@@ -16,7 +16,8 @@ function invite_user_overview($page, $account) {
 
   $rows = array();
   $profile_access = user_access('access user profiles');
-  $allow_delete = user_access('withdraw accepted invitations');
+  $allow_delete = user_access('withdraw own invitations');
+  $allow_accepted_delete = user_access('withdraw own accepted invitations');
 
   $query = db_select('invite', 'i')
     ->fields('i')
@@ -66,7 +67,7 @@ function invite_user_overview($page, $account) {
           $row[] = check_plain($invite->email);
         }
         $row[] = $account_exists ? t('Accepted') : t('Deleted');
-        $row[] = $allow_delete ? l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => drupal_get_destination())) : '';
+        $row[] = $allow_accepted_delete ? l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => drupal_get_destination())) : '';
         break;
 
       case 'pending':
@@ -75,8 +76,16 @@ function invite_user_overview($page, $account) {
 
         $row[] = check_plain($invite->email);
         $row[] = $expired ? t('Expired') : t('Pending');
-        $row[] = l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => drupal_get_destination())) .
-          ($expired ? ' | ' . l(t('resend'), "invite/resend/$invite->reg_code") : '');
+        
+        $operations = array();
+        if ($allow_delete) {
+          $operations[] = l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => drupal_get_destination())); 
+        }
+        if ($expired) {
+          $operations[] = l(t('resend'), "invite/resend/$invite->reg_code");
+        }
+        
+        $row[] = implode(' | ', $operations);
         break;
     }
     $rows[] = $row;
