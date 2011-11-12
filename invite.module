@@ -573,9 +573,26 @@ function invite_user_presave(&$edit, $account, $category) {
  * Implements hook_user_cancel().
  */
 function invite_user_cancel($edit, $account, $method) {
-  invite_delete($account->uid);
+  // Clean up the notification queue.
+  db_delete('invite_notifications')
+    ->condition('uid', $account->uid)
+    ->execute();
 }
 
+/**
+ * Implements hook_user_delete().
+ */
+function invite_user_delete($account) {
+  // Delete any invites originating from this user.
+  db_delete('invite')
+    ->condition('uid', $account->uid)
+    ->execute();
+    
+  // Clean up the notification queue.
+  db_delete('invite_notifications')
+    ->condition('uid', $account->uid)
+    ->execute();
+}
 /**
  * Finds the invitation to assign to the new account when the
  * user is registering.
@@ -667,23 +684,30 @@ function invite_target_roles($invite) {
 }
 
 /**
- * Physically delete all invites from and to a user.
+ * Delete an invite from the database.
  *
- * @param $uid
- *   The user id to delete invites for.
+ * @param $invite
+ *   The invite object or reg code to delete.
  */
-function invite_delete($uid) {
-  // Delete invite for this user if the originating user has the permission.
-  $origin = db_query("SELECT uid FROM {invite} WHERE invitee = :uid", array(':uid' => $uid))->fetchField();
-  if ($origin && $inviter = user_load($origin)) {
-    if (user_access('withdraw own accepted invitations', $inviter)) {
-      db_query("DELETE FROM {invite} WHERE invitee = :uid", array(':uid' => $uid));
-    }
+function invite_delete($invite) {
+  if (is_string($invite)) {
+    $invite = invite_load($invite);
   }
-  // Delete any invites originating from this user.
-  db_query("DELETE FROM {invite} WHERE uid = :uid", array(':uid' => $uid));
+  
+  if (empty($invite) || !is_object($invite)) {
+    return;
+  }
+  
+  db_delete('invite')
+    ->condition('iid', $invite->iid)
+    ->execute();
+
   // Clean up the notification queue.
-  db_query("DELETE FROM {invite_notifications} WHERE uid = :uid OR invitee = :uid", array(':uid' => $uid));
+  if ($invite->invitee) {
+    db_delete('invite_notifications')
+      ->condition('invitee', $invite->invitee)
+      ->execute();
+  }
 }
 
 /**
