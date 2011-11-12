@@ -31,7 +31,7 @@ function invite_user_overview($page, $account) {
     // defaulted to and the other cases will never be hit.
     default:
       $query->leftJoin('users', 'u', 'u.uid = i.invitee AND u.uid <> 0');
-      $query->fields('u', array('uid'));
+      $query->fields('u', array('uid', 'status'));
       $query->condition('i.joined', 0, '<>');
       $query->orderBy('u.uid', 'DESC');
       //$sql = "SELECT i.*, u.uid AS account FROM {invite} i LEFT JOIN {users} u ON u.uid = i.invitee AND u.uid <> 0 WHERE i.uid = %d AND i.joined <> 0 AND canceled = 0 ORDER BY u.uid DESC";
@@ -60,7 +60,7 @@ function invite_user_overview($page, $account) {
       default:
         $account_exists = !is_null($invite->uid);
 
-        if ($profile_access && $account_exists) {
+        if ($profile_access && $account_exists && $invite->status > 0) {
           $row[] = l($invite->email, 'user/' . $invite->invitee, array('title' => t('View user profile.')));
         }
         else {
