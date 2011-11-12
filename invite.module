@@ -49,7 +49,7 @@ function invite_help($path, $arg) {
       return;
   }
   $output .= ' ' . t('The status <em>deleted</em> means the user account has been terminated.') . '</p>';
-  if (!user_access('withdraw accepted invitations')) {
+  if (!user_access('withdraw own accepted invitations')) {
     $output .= '<p>' . t("At any time, you may withdraw either pending or expired invitations. Accepted invitations can't be withdrawn and count permanently toward your invitation allotment.") . '</p>';
   }
   return $output;
@@ -86,24 +86,28 @@ function invite_theme() {
 function invite_permission() {
   return array(
     'administer invitations' => array(
-      'title' => t('administer invitations'),
+      'title' => t('Administer invitations'),
       'description' => t('Administer all invitations'),
     ),
     'send invitations' => array(
-      'title' => t('send invitations'),
+      'title' => t('Send invitations'),
       'description' => t('Send invitations to other users.'),
     ),
     'send mass invitations' => array(
-      'title' => t('send mass invitations'),
+      'title' => t('Send mass invitations'),
       'description' => t('Send invitations to multiple recipients.'),
     ),
     'track invitations' => array(
-      'title' => t('track invitations'),
+      'title' => t('Track invitations'),
       'description' => t('Track sent invitations.'),
     ),
-    'withdraw accepted invitations' => array(
-      'title' => t('withdraw accepted invitations'),
-      'description' => t('Withdraw invitations that have already been accepted.'),
+    'withdraw own invitations' => array(
+      'title' => t('Withdraw own invitations'),
+      'description' => t('Withdraw own invitations.'),
+    ),
+    'withdraw own accepted invitations' => array(
+      'title' => t('Withdraw own accepted invitations'),
+      'description' => t('Withdraw own invitations that have already been accepted.'),
     ),
   );
 }
@@ -171,8 +175,9 @@ function invite_menu() {
   );
   $items['invite/withdraw/%invite'] = array(
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('invite_cancel', 2),
-    'access arguments' => array('track invitations'),
+    'page arguments' => array('invite_withdraw', 2),
+    'access callback' => 'invite_withdraw_access',
+    'access arguments' => array(2),
     'type' => MENU_CALLBACK,
   );
   $items['invite/resend/%invite'] = array(
@@ -313,6 +318,30 @@ function invite_user_access($permission, $account) {
   }
 
   return ($user->uid == $account->uid && user_access($permission));
+}
+
+/**
+ * Access callback for withdraw confirmation form.
+ *
+ * @param $invite
+ *   The invitations to be withdrawn.
+ */
+function invite_withdraw_access($invite) {
+  global $user;
+  
+  if (!$invite->joined ) {
+    $permission = 'withdraw own invitations';
+  }
+  else {
+    $permission = 'withdraw own accepted invitations';
+  }
+
+  if (($invite->uid == $user->uid && user_access($permission)) || user_access('administer invitations')) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
 }
 
 /**
@@ -647,7 +676,7 @@ function invite_delete($uid) {
   // Delete invite for this user if the originating user has the permission.
   $origin = db_query("SELECT uid FROM {invite} WHERE invitee = :uid", array(':uid' => $uid))->fetchField();
   if ($origin && $inviter = user_load($origin)) {
-    if (user_access('withdraw accepted invitations', $inviter)) {
+    if (user_access('withdraw own accepted invitations', $inviter)) {
       db_query("DELETE FROM {invite} WHERE invitee = :uid", array(':uid' => $uid));
     }
   }
@@ -1366,7 +1395,7 @@ function invite_mail($key, &$message, $params) {
 }
 
 /**
- * Menu callback; display confirm form to delete an invitation.
+ * Menu callback; display confirm form to withdraw an invitation.
  *
  * @param $form_satate
  *   A keyed array containing the current state of the form.
@@ -1374,51 +1403,43 @@ function invite_mail($key, &$message, $params) {
  *   A string denoting the orginating status page to return the user to
  *   afterwards.
  */
-function invite_cancel($form, &$form_state, $invite) {
+function invite_withdraw($form, &$form_state, $invite) {
   global $user;
 
-  // Inviter must be the current user.
-  if ($invite->inviter->uid == $user->uid) {
-    // Verify the invitation may be deleted.
-    if (!$invite->joined || user_access('withdraw accepted invitations')) {
-      $form['invite'] = array(
-        '#type' => 'value',
-        '#value' => $invite,
-      );
-      $description = (!$invite->joined && $invite->expiry > REQUEST_TIME) ? t("The invitee won't be able to register any more using this invitation.") : '';
+  $form['invite'] = array(
+    '#type' => 'value',
+    '#value' => $invite,
+  );
+  $description = (!$invite->joined && $invite->expiry > REQUEST_TIME) ? t("The invitee won't be able to register any more using this invitation.") . ' ' : '';
 
-      return confirm_form(
-        $form,
-        t('Are you sure you want to withdraw the invitation to %email?', array('%email' => $invite->email)),
-        $_REQUEST['destination'],
-        $description . ' ' . t('This action cannot be undone.'),
-        t('Withdraw'),
-        t('Cancel')
-      );
-    }
-    else {
-      drupal_set_message(t('Invitations to registered users cannot be withdrawn.'), 'error');
-    }
-  }
-  else {
-    watchdog('invite', 'Detected malicious attempt to delete an invitation.', array(), WATCHDOG_WARNING, l(t('view'), 'user/' . $user->uid));
-    return drupal_access_denied();
-  }
+  return confirm_form(
+    $form,
+    t('Are you sure you want to withdraw the invitation to %email?', array('%email' => $invite->email)),
+    $_REQUEST['destination'],
+    $description . t('This action cannot be undone.'),
+    t('Withdraw'),
+    t('Cancel')
+  );
   drupal_goto();
 }
 
 /**
- * Submit handler to delete an invitation.
+ * Submit handler to withdraw an invitation.
  */
-function invite_cancel_submit($form, &$form_state) {
+function invite_withdraw_submit($form, &$form_state) {
   $invite = $form_state['values']['invite'];
 
-  db_query("UPDATE {invite} SET canceled = 1 WHERE reg_code = :reg_code", array(':reg_code' => $invite->reg_code));
+  db_update('invite')
+    ->fields(array(
+      'canceled' => 1,
+    ))
+    ->condition('reg_code', $invite->reg_code)
+    ->execute();
+  
   drupal_set_message(t('Invitation to %email has been withdrawn.', array('%email' => $invite->email)));
 
   // Notify other modules.
-  $args = array('inviter' => $invite->inviter, 'email' => $invite->email, 'code' => $invite->reg_code);
-  module_invoke_all('invite', 'cancel', $args);
+  module_invoke_all('invite', 'withdraw', $invite);
 }
 
 /**
