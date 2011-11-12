@@ -81,7 +81,7 @@ function invite_user_overview($page, $account) {
         if ($allow_delete) {
           $operations[] = l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => drupal_get_destination())); 
         }
-        if ($expired) {
+        if ($expired && $account->uid == $user->uid) {
           $operations[] = l(t('resend'), "invite/resend/$invite->reg_code");
         }
         
