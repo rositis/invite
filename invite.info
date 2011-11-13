@@ -8,4 +8,4 @@ files[] = invite.module
 files[] = invite.admin.inc
 files[] = invite.tokens.inc
 files[] = invite.install
-configure = admin/people/invite/settings
+configure = admin/config/people/invite
