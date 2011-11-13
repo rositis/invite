@@ -535,6 +535,8 @@ function invite_user_insert(&$edit, $account, $category) {
 
   if ($invite) {
     invite_process_invite($invite, $account);
+    
+    module_invoke_all('invite_accept', $invite, $account);
 
     // Flag the inviting user, this triggers status notifications and
     // saves us some queries otherwise.
@@ -556,7 +558,7 @@ function invite_user_presave(&$edit, $account, $category) {
     $invite = invite_find_invite($account->mail);
     
     if ($invite) {
-      $roles = invite_target_roles($invite);
+      $roles = invite_target_roles($invite, $edit);
       
       if ($roles) {  
         if (!isset($edit['roles']) || !is_array($edit['roles'])) {
@@ -641,16 +643,6 @@ function invite_process_invite($invite, $account) {
 
   // Unblock the user account.
   db_query("UPDATE {users} SET status = 1 WHERE uid = :uid", array(':uid' => $account->uid));
-
-  // Determine target roles for invited user.
-  //$roles = invite_target_roles($invite);
-  //
-  // Allow other modules to act on the role escalation.
-  //$args = array('invitee' => $account, 'inviter' => $invite->inviter, 'roles' => &$roles);
-  //module_invoke_all('invite', 'escalate', $args);
-  // No actual escalation happens here - comment out for now.
-
-  //return $roles;
 }
 
 /**
@@ -658,10 +650,12 @@ function invite_process_invite($invite, $account) {
  *
  * @param $invite
  *   An invite object.
+ * @param $accout
+ *   The user for whom the role is being determined.
  * @return
  *   Array of target roles for an invited user.
  */
-function invite_target_roles($invite) {
+function invite_target_roles($invite, $account) {
   $targets = array();
   $roles = array();
 
@@ -680,6 +674,8 @@ function invite_target_roles($invite) {
       $targets[$target] = $target;
     }
   }
+  
+  invite_invoke_all('invite_target_roles', $targets, $invite, $account);
 
   return $targets;
 }
@@ -1200,7 +1196,7 @@ function invite_form_submit($form, &$form_state) {
 
       // Notify other modules.
       if (!$form_state['values']['resent']) {
-        module_invoke_all('invite', 'invite', $invite);
+        module_invoke_all('invite_send', $invite);
       }
 
       $num_succeeded++;
@@ -1462,7 +1458,7 @@ function invite_withdraw_submit($form, &$form_state) {
   drupal_set_message(t('Invitation to %email has been withdrawn.', array('%email' => $invite->email)));
 
   // Notify other modules.
-  module_invoke_all('invite', 'withdraw', $invite);
+  module_invoke_all('invite_withdraw', $invite);
 }
 
 /**
@@ -1560,3 +1556,38 @@ function invite_create() {
   );
   return (object)$invite;
 }
+
+/**
+ * Invokes a hook in all modules, allowing passing arguments by reference.
+ * This function is used in place of module_invoke_all, because passing by
+ * reference does not work with that function.
+ *
+ * @param $hook
+ *   The hook to invoke.
+ * @param @a1
+ *   First argument to pass to the hook.
+ * @param @a2
+ *   Second argument to pass to the hook.
+ * @param @a3
+ *   Third argument to pass to the hook.
+ * @return
+ *   A merged array containing the returned values from the invoked hooks.
+ */
+function invite_invoke_all($hook, &$a1, &$a2, &$a3) {
+  $return = array();
+  
+  foreach (module_implements($hook) as $module) {
+    $function = $module . '_' . $hook;
+    $result = $function($a1, $a2, $a3);
+    
+    if (isset($result) && is_array($result)) {
+      $return = array_merge_recursive($return, $result);
+    }
+    else if (isset($result)) {
+      $return[] = $result;
+    }
+  }
+  
+  return $return;
+}
+
