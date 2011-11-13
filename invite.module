@@ -23,7 +23,7 @@ define('INVITE_VALID', 1);
 define('INVITE_WITHDRAWN', 2);
 define('INVITE_USED', 3);
 define('INVITE_EXPIRED', 4);
-  
+
 /**
  * Implements hook_help().
  */
@@ -309,7 +309,7 @@ function invite_admin_details_page_title($account) {
  */
 function invite_user_access($permission, $account) {
   global $user;
-  
+
   if ($permission == 'send invitations' && $user->uid != $account->uid) {
     // Show new invitation link on the user's own profile only.
     return FALSE;
@@ -329,7 +329,7 @@ function invite_user_access($permission, $account) {
  */
 function invite_withdraw_access($invite) {
   global $user;
-  
+
   if (!$invite->joined ) {
     $permission = 'withdraw own invitations';
   }
@@ -430,7 +430,7 @@ function invite_load($code) {
   if (!isset($invites)) {
     $invites = array();
   }
-  
+
   if (!isset($invites[$code])) {
     $invite = db_select('invite', 'i')
       ->fields('i')
@@ -441,7 +441,7 @@ function invite_load($code) {
     if ($invite) {
       $invite->inviter = user_load($invite->uid);
       $invite->data = unserialize($invite->data);
-      
+
       $invites[$code] = $invite;
     }
     else {
@@ -461,14 +461,14 @@ function invite_load($code) {
 function invite_load_from_context() {
   if (isset($_SESSION[INVITE_SESSION])) {
     $invite = invite_load($_SESSION[INVITE_SESSION]);
-  }  
+  }
   // Legacy url support (user/register/regcode).
-  else if (arg(0) == 'user' && arg(1) == 'register' && $code = arg(2)) {
+  elseif (arg(0) == 'user' && arg(1) == 'register' && $code = arg(2)) {
     if ($invite = invite_load($code)) {
       $_SESSION[INVITE_SESSION] = $invite->reg_code;
     }
   }
-  
+
   if (!empty($invite)) {
     return $invite;
   }
@@ -510,18 +510,18 @@ function invite_validate($invite) {
  */
 function invite_save(&$invite) {
   $invite->is_new = empty($invite->iid);
-  
+
   $data = $invite->data;
   $invite->data = serialize($data);
-  
+
   if (!$invite->is_new) {
     drupal_write_record('invite', $invite, 'iid');
   }
   else {
-    $invite->created = REQUEST_TIME;    
+    $invite->created = REQUEST_TIME;
     drupal_write_record('invite', $invite);
   }
-  
+
   $invite->data = $data;
   $invite->inviter = user_load($invite->uid);
   return $invite;
@@ -535,7 +535,7 @@ function invite_user_insert(&$edit, $account, $category) {
 
   if ($invite) {
     invite_process_invite($invite, $account);
-    
+
     module_invoke_all('invite_accept', $invite, $account);
 
     // Flag the inviting user, this triggers status notifications and
@@ -556,11 +556,11 @@ function invite_user_insert(&$edit, $account, $category) {
 function invite_user_presave(&$edit, $account, $category) {
   if ($account->is_new && !empty($account->mail)) {
     $invite = invite_find_invite($account->mail);
-    
+
     if ($invite) {
       $roles = invite_target_roles($invite, $edit);
-      
-      if ($roles) {  
+
+      if ($roles) {
         if (!isset($edit['roles']) || !is_array($edit['roles'])) {
           $edit['roles'] = array();
         }
@@ -590,7 +590,7 @@ function invite_user_delete($account) {
   db_delete('invite')
     ->condition('uid', $account->uid)
     ->execute();
-    
+
   // Clean up the notification queue.
   db_delete('invite_notifications')
     ->condition('uid', $account->uid)
@@ -618,7 +618,7 @@ function invite_find_invite($mail) {
       $invite = invite_load($code);
     }
   }
-  
+
   return $invite;
 }
 
@@ -666,7 +666,7 @@ function invite_target_roles($invite, $account) {
 
   // Add a dummy entry to retrieve the default target role setting.
   $roles['default'] = 'default';
-  
+
   // Map to configured target roles.
   foreach ($roles as $rid => $role) {
     $target = variable_get('invite_target_role_' . $rid, DRUPAL_AUTHENTICATED_RID);
@@ -674,7 +674,7 @@ function invite_target_roles($invite, $account) {
       $targets[$target] = $target;
     }
   }
-  
+
   invite_invoke_all('invite_target_roles', $targets, $invite, $account);
 
   return $targets;
@@ -690,11 +690,11 @@ function invite_delete($invite) {
   if (is_string($invite)) {
     $invite = invite_load($invite);
   }
-  
+
   if (empty($invite) || !is_object($invite)) {
     return;
   }
-  
+
   db_delete('invite')
     ->condition('iid', $invite->iid)
     ->execute();
@@ -1171,7 +1171,7 @@ function invite_form_submit($form, &$form_state) {
     // Create or load the invite object.
     if (!empty($form_state['values']['reg_code'])) {
       $invite = invite_load($form_state['values']['reg_code']);
-      
+
       $invite->expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
       $invite->resent = $form_state['values']['resent'];
       $invite->data = array('subject' => $subject, 'message' => $message);
@@ -1179,14 +1179,14 @@ function invite_form_submit($form, &$form_state) {
     else {
       $code = invite_generate_code();
       $invite = invite_create();
-      
+
       $invite->reg_code = $code;
       $invite->email = $email;
       $invite->expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
       $invite->resent  = $form_state['values']['resent'];
       $invite->data = array('subject' => $subject, 'message' => $message);
     }
-    
+
     // Send e-mail.
     $params = array('invite' => $invite);
     $result = drupal_mail('invite', 'invite', $email, $language, $params, $from, TRUE);
@@ -1381,8 +1381,8 @@ function invite_get_subject($substitutions = array()) {
 function invite_generate_code() {
   do {
     $reg_code = user_password(8);
-    $result = db_query("SELECT COUNT(*) FROM {invite} WHERE reg_code = :regcode", array(':regcode' => $reg_code));
-  } while ($result->fetchField());
+    $result = (bool) db_query_range('SELECT reg_code FROM {invite} WHERE reg_code = :regcode', 0, 1, array(':regcode' => $reg_code))->fetchField();
+  } while ($result);
 
   return $reg_code;
 }
@@ -1454,7 +1454,7 @@ function invite_withdraw_submit($form, &$form_state) {
     ))
     ->condition('reg_code', $invite->reg_code)
     ->execute();
-  
+
   drupal_set_message(t('Invitation to %email has been withdrawn.', array('%email' => $invite->email)));
 
   // Notify other modules.
@@ -1512,17 +1512,17 @@ To become a member of [site:name], click the link below or paste it into the add
  */
 function _invite_token_types($args = array()) {
   global $user;
-  
+
   if (is_object($args)) {
     $invite = $args;
   }
   else {
     $invite = invite_create();
-    
+
     // Reg_code placeholder for empty invites.
     $invite->reg_code = '--invite-code--';
   }
-  
+
   if (is_array($args)) {
     foreach ($args as $key => $value) {
       $invite->$key = $value;
@@ -1540,7 +1540,7 @@ function _invite_token_types($args = array()) {
  */
 function invite_create() {
   global $user;
-  
+
   $invite = array(
     'reg_code' => '',
     'email'   => '',
@@ -1575,19 +1575,19 @@ function invite_create() {
  */
 function invite_invoke_all($hook, &$a1, &$a2, &$a3) {
   $return = array();
-  
+
   foreach (module_implements($hook) as $module) {
     $function = $module . '_' . $hook;
     $result = $function($a1, $a2, $a3);
-    
+
     if (isset($result) && is_array($result)) {
       $return = array_merge_recursive($return, $result);
     }
-    else if (isset($result)) {
+    elseif (isset($result)) {
       $return[] = $result;
     }
   }
-  
+
   return $return;
 }
 

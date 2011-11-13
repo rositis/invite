@@ -414,7 +414,7 @@ function invite_update_202() {
 
 /**
  * Update variable names to use role id instead of translated role name.
- * @see #322748
+ * @see http://drupal.org/node/322748
  */
 function invite_update_203() {
   $ret = array();

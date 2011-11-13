@@ -76,15 +76,15 @@ function invite_user_overview($page, $account) {
 
         $row[] = check_plain($invite->email);
         $row[] = $expired ? t('Expired') : t('Pending');
-        
+
         $operations = array();
         if ($allow_delete) {
-          $operations[] = l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => drupal_get_destination())); 
+          $operations[] = l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => drupal_get_destination()));
         }
         if ($expired && $account->uid == $user->uid) {
           $operations[] = l(t('resend'), "invite/resend/$invite->reg_code");
         }
-        
+
         $row[] = implode(' | ', $operations);
         break;
     }
@@ -104,7 +104,7 @@ function invite_accept($invite) {
   global $user;
 
   $status = invite_validate($invite);
-  
+
   if (!$user->uid && $status == INVITE_VALID) {
     $_SESSION[INVITE_SESSION] = $invite->reg_code;
     drupal_goto(variable_get('invite_registration_path', 'user/register'));

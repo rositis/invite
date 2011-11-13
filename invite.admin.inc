@@ -191,7 +191,7 @@ function invite_admin_overview() {
     t('Remaining'),
     t('Operations'),
   );
-  
+
   $query = array();
 
   $result = db_select('invite', 'i')
@@ -212,7 +212,7 @@ function invite_admin_overview() {
 
     $count_query->innerJoin('users', 'u2', 'u2.uid = i.invitee');
     $count_query->where("LOWER(u2.name) LIKE CONCAT('%', LOWER(:name), '%')", array(':name' => $_SESSION[INVITE_ADMIN_SESSION]));
-    
+
     $query = array('filter' => $_SESSION[INVITE_ADMIN_SESSION]);
     unset($_SESSION[INVITE_ADMIN_SESSION]);
   }
@@ -231,7 +231,7 @@ function invite_admin_overview() {
   $rows = array();
   foreach ($result as $row) {
     $account = user_load($row->uid);
-    
+
     $cells = array();
     $cells[] = theme('username', array('account' => $row, 'name' => $row->name));
     $cells[] = $row->invites;
@@ -327,11 +327,11 @@ function invite_admin_details($account) {
       $result = array_reverse($result);
     }
   }
-  
+
   $rows = array();
   foreach ($result as $row) {
     $invitee = user_load($row->invitee);
-    
+
     $cells = array();
     $cells[] = check_plain($row->email);
     $cells[] = $row->joined ? theme('username', array('account' => $invitee)) : '';
@@ -363,8 +363,8 @@ function invite_admin_details($account) {
 function invite_sort_by_status($a, $b) {
   $status_a = $a->canceled ? t('Withdrawn') : ($a->joined ? t('Joined') : ($a->expiry < REQUEST_TIME ? t('Expired') : t('Pending')));
   $status_b = $b->canceled ? t('Withdrawn') : ($b->joined ? t('Joined') : ($b->expiry < REQUEST_TIME ? t('Expired') : t('Pending')));
-    
-  return $status_a < $status_b ? -1 : ($status_a > $status_b ? 1 : 0); 
+
+  return $status_a < $status_b ? -1 : ($status_a > $status_b ? 1 : 0);
 }
 
 function invite_admin_details_filter_form($form, &$form_state, $uid, $filter) {
