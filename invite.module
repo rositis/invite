@@ -807,28 +807,38 @@ function invite_form($form, &$form_state, $op = 'page', $edit = array()) {
  *   The number of remaining invites.
  */
 function invite_get_remaining_invites($account) {
-  if ($account->uid == 1) {
-    return INVITE_UNLIMITED;
+  $remaining = invite_get_role_limit($account);
+
+  $limits = module_invoke_all('invite_limit', $account, $remaining);
+  if (!empty($limits)) {
+    $remaining = array_pop($limits);
   }
 
-  // Check user property for remaining invites.
-  if (isset($account->data['invites'])) {
-    $remaining = $account->data['invites'];
-  }
-  else {
-    $remaining = invite_get_role_limit($account);
-    if ($remaining > 0) {
-      // Legacy support.
-      $sent = db_query("SELECT COUNT(*) FROM {invite} WHERE uid = :uid", array(':uid' => $account->uid))->fetchField();
+  if ($remaining > 0) {
+    $query = db_select('invite')
+      ->condition('uid', $account->uid)
+      ->condition('canceled', 0);
+    $query->addExpression('COUNT(*)');
+
+    $sent = $query
+      ->execute()
+      ->fetchField();
+
+    if ($sent) {
       $remaining = max($remaining - $sent, 0);
-      if ($sent > 0) {
-        // Update user property for faster lookup next time.
-        user_save($account, array('data' => array('invites' => $remaining)));
-      }
     }
   }
 
   return $remaining;
+}
+
+/*
+ * Implements hook_invite_limit().
+ */
+function invite_invite_limit($account, $limit) {
+  if ($account->uid == 1) {
+    return INVITE_UNLIMITED;
+  }
 }
 
 /**
@@ -1212,10 +1222,6 @@ function invite_form_submit($form, &$form_state) {
   }
 
   if ($num_succeeded) {
-    if (isset($form_state['values']['remaining_invites'])) {
-      // Update user property if user is limited.
-      user_save($user, array('invites' => $form_state['values']['remaining_invites'] - $num_succeeded));
-    }
     $message = format_plural($num_succeeded, 'Your invitation has been successfully sent. You will be notified when the invitee joins the site.', '@count invitations have been successfully sent. You will be notified when any invitee joins the site.');
     drupal_set_message($message);
   }
@@ -1590,4 +1596,3 @@ function invite_invoke_all($hook, &$a1, &$a2, &$a3) {
 
   return $return;
 }
-

@@ -60,3 +60,25 @@ function hook_invite_accept($invite, $accout) {
 function hook_invite_target_roles(&$roles, $invite, $account) {
 }
 
+/**
+ * Alter the limit of invitations a user is allowed to send.
+ *
+ * This hook is invoked when the invitation limit is being determined for a
+ * specific user. Modules implementing this hook should return the number of
+ * invitations they wish the user to be limited to. If multiple modules return
+ * values, the last invoked module will take precedence. The hook should
+ * retrun INVITE_UNLIMITED if it wishes to remove the limitation.
+ *
+ * @param $account
+ *   The account for which the limit is being determined.
+ * @param $limit
+ *   The currently exposed limit based on Invite's role settings.
+ * @return
+ *   The number of invitations that the module wants to limit the user to. If
+ *   the module does not wish to alter the limit, it should not return anything.
+ */
+function hook_invite_limit($account, $limit) {
+  if ($account->uid == 1) {
+    return 1000;
+  }
+}

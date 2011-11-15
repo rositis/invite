@@ -1,0 +1,106 @@
+diff --git a/invite.api.php b/invite.api.php
+index 566ba6a..b1df0c6 100644
+--- a/invite.api.php
++++ b/invite.api.php
+@@ -60,3 +60,25 @@ function hook_invite_accept($invite, $accout) {
+ function hook_invite_target_roles(&$roles, $invite, $account) {
+ }
+ 
++/**
++ * Alter the limit of invitations a user is allowed to send.
++ *
++ * This hook is invoked when the invitation limit is being determined for a
++ * specific user. Modules implementing this hook should return the number of
++ * invitations they wish the user to be limited to. If multiple modules return
++ * values, the last invoked module will take precedence. The hook should
++ * retrun INVITE_UNLIMITED if it wishes to remove the limitation.
++ *
++ * @param $account
++ *   The account for which the limit is being determined.
++ * @param $limit
++ *   The currently exposed limit based on Invite's role settings.
++ * @return
++ *   The number of invitations that the module wants to limit the user to. If
++ *   the module does not wish to alter the limit, it should not return anything.
++ */
++function hook_invite_limit($account, $limit) {
++  if ($account->uid == 1) {
++    return 1000;
++  }
++}
+diff --git a/invite.module b/invite.module
+index c5be98f..763243c 100644
+--- a/invite.module
++++ b/invite.module
+@@ -807,30 +807,38 @@ function invite_form($form, &$form_state, $op = 'page', $edit = array()) {
+  *   The number of remaining invites.
+  */
+ function invite_get_remaining_invites($account) {
+-  if ($account->uid == 1) {
+-    return INVITE_UNLIMITED;
+-  }
++  $remaining = invite_get_role_limit($account);
+ 
+-  // Check user property for remaining invites.
+-  if (isset($account->data['invites'])) {
+-    $remaining = $account->data['invites'];
++  $limits = module_invoke_all('invite_limit', $account, $remaining);
++  if (!empty($limits)) {
++    $remaining = array_pop($limits);
+   }
+-  else {
+-    $remaining = invite_get_role_limit($account);
+-    if ($remaining > 0) {
+-      // Legacy support.
+-      $sent = db_query("SELECT COUNT(*) FROM {invite} WHERE uid = :uid", array(':uid' => $account->uid))->fetchField();
+-      $remaining = max($remaining - $sent, 0);
+-      if ($sent > 0) {
+-        // Update user property for faster lookup next time.
+-        user_save($account, array('data' => array('invites' => $remaining)));
+-      }
+-    }
++
++  if ($remaining > 0) {
++    $query = db_select('invite')
++      ->condition('uid', $account->uid)
++      ->condition('canceled', 0);
++    $query->addExpression('COUNT(*)');
++
++    $sent = $query
++      ->execute()
++      ->fetchField();
++
++    $remaining = max($remaining - $sent, 0);
+   }
+ 
+   return $remaining;
+ }
+ 
++/*
++ * Implements hook_invite_limit().
++ */
++function invite_invite_limit($account, $limit) {
++  if ($account->uid == 1) {
++    return INVITE_UNLIMITED;
++  }
++}
++
+ /**
+  * Calculate the max. number of invites based on a user's role.
+  *
+@@ -1212,10 +1220,6 @@ function invite_form_submit($form, &$form_state) {
+   }
+ 
+   if ($num_succeeded) {
+-    if (isset($form_state['values']['remaining_invites'])) {
+-      // Update user property if user is limited.
+-      user_save($user, array('invites' => $form_state['values']['remaining_invites'] - $num_succeeded));
+-    }
+     $message = format_plural($num_succeeded, 'Your invitation has been successfully sent. You will be notified when the invitee joins the site.', '@count invitations have been successfully sent. You will be notified when any invitee joins the site.');
+     drupal_set_message($message);
+   }
+@@ -1590,4 +1594,3 @@ function invite_invoke_all($hook, &$a1, &$a2, &$a3) {
+ 
+   return $return;
+ }
+-
