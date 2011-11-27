@@ -48,6 +48,12 @@ function invite_settings() {
     '#default_value' => variable_get('invite_registration_path', 'user/register'),
     '#description' => t('Path to the registration page for invited users. Useful when using the <em>Assign from Path</em> option of <a href="@url">Auto Assign Roles</a> module.', array('@url' => 'http://drupal.org/project/autoassignrole')),
   );
+  $form['general']['invite_require_approval'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Require administrator approval for invitees'),
+    '#default_value' => variable_get('invite_require_approval', FALSE),
+    '#description' => t('Accounts that have been created with an invitation will require administrator approval.'),
+  );
 
   // Role settings.
   $form['role'] = array(
@@ -385,4 +391,3 @@ function invite_admin_details_filter_form($form, &$form_state, $uid, $filter) {
   );
   return $form;
 }
-

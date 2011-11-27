@@ -25,6 +25,11 @@ define('INVITE_USED', 3);
 define('INVITE_EXPIRED', 4);
 
 /**
+ * Registration settings form values.
+ */
+define('USER_REGISTER_INVITATION_ONLY', 3);
+
+/**
  * Implements hook_help().
  */
 function invite_help($path, $arg) {
@@ -257,7 +262,7 @@ function invite_menu_alter(&$items) {
  * Determine if user registration mode is set to invite only.
  */
 function invite_user_registration_by_invite_only() {
-  return (variable_get('user_register', 1) === '1-inviteonly');
+  return (variable_get('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) == USER_REGISTER_INVITATION_ONLY);
 }
 
 /**
@@ -378,7 +383,7 @@ function invite_form_alter(&$form, &$form_state, $form_id) {
       // has overridden the menu access handler for the user registration form.
       $item = menu_get_item('user/register');
       if (in_array($item['access_callback'], array('user_register_access', 'invite_user_register_access'))) {
-        $form['registration_cancellation']['user_register']['#options']['1-inviteonly'] = t('New user registration by invitation only');
+        $form['registration_cancellation']['user_register']['#options'][USER_REGISTER_INVITATION_ONLY] = t('Invitees only');
       }
       // Clear menu cache on submit to allow our custom access handler to
       // snap in.
@@ -403,6 +408,9 @@ function invite_form_alter(&$form, &$form_state, $form_id) {
         if (isset($field['mail'])) {
           $field['mail']['#default_value'] = $invite->email;
         }
+
+        // Enable/disable account depending on whether approval is required for invitees.
+        $form['account']['status']['#default_value'] = !variable_get('invite_require_approval', FALSE);
       }
       break;
 
@@ -640,9 +648,6 @@ function invite_process_invite($invite, $account) {
   // Add all users who invited this particular e-mail address to the
   // notification queue.
   db_query("INSERT INTO {invite_notifications} (uid, invitee) SELECT uid, :uid FROM {invite} WHERE (email = :invite_email OR email = :account_mail) AND canceled = 0", array(':uid' => $account->uid, ':invite_email' => $invite->email, ':account_mail' => $account->mail));
-
-  // Unblock the user account.
-  db_query("UPDATE {users} SET status = 1 WHERE uid = :uid", array(':uid' => $account->uid));
 }
 
 /**
