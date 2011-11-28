@@ -419,7 +419,7 @@ function invite_form_alter(&$form, &$form_state, $form_id) {
       if (invite_user_registration_by_invite_only()) {
         $new_items = array();
         $new_items[] = l(t('Request new password'), 'user/password', array('attributes' => array('title' => t('Request new password via e-mail.'))));
-        $form['links']['#value'] = theme('item_list', array('items' => $new_items));
+        $form['links'] = array('#markup' => theme('item_list', array('items' => $new_items)));
       }
       break;
   }
