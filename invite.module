@@ -124,7 +124,7 @@ function invite_init() {
   global $user;
 
   // Notify current user about newly joined invitees.
-  if (!empty($user->invite_sent) && !module_invoke('throttle', 'status')) {
+  if (!empty($user->data['invite_accepted']) && !module_invoke('throttle', 'status')) {
     invite_notify($user->uid);
   }
 }
@@ -360,8 +360,8 @@ function invite_notify($uid) {
   $result = db_query('SELECT invitee FROM {invite_notifications} WHERE uid = :uid', array(':uid' => $uid))->fetchAll();
   foreach ($result as $row) {
     $account = user_load_multiple(array($row->invitee), array('status' => 1));
-    if ($account) {
-      drupal_set_message(t('!user (@email) has joined @site-name!', array('!user' => theme('username', array('account' => $account)), '@email' => $account->mail, '@site-name' => variable_get('site_name', t('Drupal')))));
+    if (!empty($account[$row->invitee])) {
+      drupal_set_message(t('!user (@email) has joined @site-name!', array('!user' => theme('username', array('account' => $account[$row->invitee])), '@email' => $account[$row->invitee]->mail, '@site-name' => variable_get('site_name', t('Drupal')))));
       db_query("DELETE FROM {invite_notifications} WHERE uid = :uid AND invitee = :invitee", array(':uid' => $uid, ':invitee' => $row->invitee));
     }
   }
@@ -449,6 +449,10 @@ function invite_load($code) {
     if ($invite) {
       $invite->inviter = user_load($invite->uid);
       $invite->data = unserialize($invite->data);
+
+      if ($invite->inviter->uid == 0) {
+        $invite->inviter->name = t('Anonymous');
+      }
 
       $invites[$code] = $invite;
     }
@@ -549,7 +553,7 @@ function invite_user_insert(&$edit, $account, $category) {
     // Flag the inviting user, this triggers status notifications and
     // saves us some queries otherwise.
     if ($invite->inviter->uid) {
-      user_save($invite->inviter, array('invite_sent' => TRUE));
+      user_save($invite->inviter, array('data' => array('invite_accepted' => TRUE)));
     }
 
     if (isset($_SESSION)) {
@@ -1120,7 +1124,7 @@ function invite_form_validate($form, &$form_state) {
       $emails = array_diff($emails, $failed_emails);
 
       if (count($failed_emails)) {
-        $error = format_plural(count($failed_emails), 'You have already invited the following recipient:', 'You have already invited the following recipients:') . '<br />';
+        $error = format_plural(count($failed_emails), 'The following recipient has already been invited:', 'The following recipients have already been invited:') . '<br />';
         $error .= implode(', ', array_map('check_plain', $failed_emails));
         drupal_set_message($error, 'error');
       }
@@ -1551,12 +1555,17 @@ function _invite_token_types($args = array()) {
  */
 function invite_create() {
   global $user;
+  $inviter = $user;
+
+  if ($inviter->uid == 0) {
+    $inviter->name = t('Anonymous');
+  }
 
   $invite = array(
     'reg_code' => '',
     'email'   => '',
-    'uid'   => $user->uid,
-    'inviter' => $user,
+    'uid'   => $inviter->uid,
+    'inviter' => $inviter,
     'invitee'   => 0,
     'created'   => REQUEST_TIME,
     'expiry' => 0,
