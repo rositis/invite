@@ -420,6 +420,29 @@ function invite_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
+/*
+ * Implements hook_user_view_alter().
+ */
+function invite_user_view_alter(&$build) {
+  if (variable_get('invite_profile_inviter', TRUE)) {
+    $inviter = db_select('invite', 'i')
+      ->fields('i', array('uid'))
+      ->condition('invitee', $build['#account']->uid)
+      ->execute()
+      ->fetchField();
+
+    if ($inviter) {
+      $inviter = user_load($inviter);
+
+      $build['summary']['invited_by'] = array(
+        '#type' => 'user_profile_item',
+        '#title' => t('Invited by'),
+        '#markup' => theme('username', array('account' => $inviter)),
+      );
+    }
+  }
+}
+
 /**
  * Load an invite record for a tracking code.
  *

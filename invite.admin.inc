@@ -54,6 +54,12 @@ function invite_settings() {
     '#default_value' => variable_get('invite_require_approval', FALSE),
     '#description' => t('Accounts that have been created with an invitation will require administrator approval.'),
   );
+  $form['general']['invite_profile_inviter'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show inviter on user profile'),
+    '#default_value' => variable_get('invite_profile_inviter', TRUE),
+    '#description' => t('If this option is checked, the user profile page will show who invited the user.'),
+  );
 
   // Role settings.
   $form['role'] = array(
