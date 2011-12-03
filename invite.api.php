@@ -2,7 +2,11 @@
 
 /**
  * @file
- * Hooks provided by Invite module.
+ * API documentation for Invite module.
+ */
+
+/**
+ * HOOKS
  */
 
 /**
@@ -81,4 +85,48 @@ function hook_invite_limit($account, $limit) {
   if ($account->uid == 1) {
     return 1000;
   }
+}
+
+/**
+ * FUNCTIONS
+ */
+
+/**
+ * Create an invite.
+ */
+function example_create_invite() {
+  // Create an empty invite.
+  $invite = invite_create();
+
+  // Set parameters.
+  $invite->email = $email;
+  $invite->data = array('subject' => $subject, 'message' => $message);
+
+  // Save it.
+  invite_save($invite);
+}
+
+/**
+ * Send an invitation email.
+ */
+function example_send_invite_email() {
+  // Either load an existing invite...
+  if ($reg_code) {
+    $invite = invite_load($reg_code);
+
+    // Modify parameters if necessary.
+    $invite->expiry = REQUEST_TIME + (60 * 60 * 24 +7);
+    $invite->data = array('subject' => $subject, 'message' => $message);
+  }
+  // or create a new one.
+  else {
+    $invite = invite_create();
+
+    // Specify initial parameters.
+    $invite->email = $email;
+    $invite->data = array('subject' => $subject, 'message' => $message);
+  }
+
+  // Send email to the invitee. If sending is successful, $invite is saved to the database.
+  invite_send($invite);
 }

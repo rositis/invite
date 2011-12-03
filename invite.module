@@ -540,6 +540,61 @@ function invite_save(&$invite) {
 }
 
 /**
+ * Send an invite.
+ *
+ * The invitation email is sent to the invitee, and if sending is successful,
+ * the invite is saved.
+ *
+ * @param $invite
+ *   Invite object.
+ * @return
+ *   TRUE, if sending was successful; FALSE otherwise..
+ */
+function invite_send($invite) {
+  global $language;
+
+  // Check if this is an existing invite.
+  $existing_invite = invite_load($invite->reg_code);
+  if ($existing_invite) {
+    $invite->expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
+    $invite->resent++;
+  }
+
+  if (empty($invite->inviter)) {
+    $invite->inviter = user_load($invite->uid);
+  }
+
+  if (!variable_get('invite_use_users_email', 0)) {
+    $from = variable_get('invite_manual_from', '');
+  }
+  elseif (!empty($invite->inviter->mail)) {
+    $from = $invite->inviter->mail;
+  }
+  if (empty($from)) {
+    // Never pass an empty string to drupal_mail()
+    $from = NULL;
+  }
+
+  // Send e-mail.
+  $params = array('invite' => $invite);
+  $result = drupal_mail('invite', 'invite', $invite->email, $language, $params, $from, TRUE);
+  if ($result['result']) {
+    // Save invite.
+    invite_save($invite);
+
+    // Notify other modules.
+    if (!$existing_invite) {
+      module_invoke_all('invite_send', $invite);
+    }
+
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
  * Implements hook_user_insert().
  */
 function invite_user_insert(&$edit, $account, $category) {
@@ -1175,49 +1230,22 @@ function invite_form_submit($form, &$form_state) {
   $subject = isset($form_state['values']['subject']) ? trim($form_state['values']['subject']) : invite_get_subject();
   $message = isset($form_state['values']['message']) ? trim($form_state['values']['message']) : NULL;
 
-  if (!variable_get('invite_use_users_email', 0)) {
-    $from = variable_get('invite_manual_from', '');
-  }
-  elseif ($user->uid) {
-    $from = $user->mail;
-  }
-  if (!$from) {
-    // Never pass an empty string to drupal_mail()
-    $from = NULL;
-  }
-
   foreach ($form_state['values']['valid_emails'] as $email) {
     // Create or load the invite object.
     if (!empty($form_state['values']['reg_code'])) {
       $invite = invite_load($form_state['values']['reg_code']);
 
       $invite->expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
-      $invite->resent = $form_state['values']['resent'];
       $invite->data = array('subject' => $subject, 'message' => $message);
     }
     else {
-      $code = invite_generate_code();
       $invite = invite_create();
 
-      $invite->reg_code = $code;
       $invite->email = $email;
-      $invite->expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
-      $invite->resent  = $form_state['values']['resent'];
       $invite->data = array('subject' => $subject, 'message' => $message);
     }
 
-    // Send e-mail.
-    $params = array('invite' => $invite);
-    $result = drupal_mail('invite', 'invite', $email, $language, $params, $from, TRUE);
-    if ($result['result']) {
-      // Save invite.
-      invite_save($invite);
-
-      // Notify other modules.
-      if (!$form_state['values']['resent']) {
-        module_invoke_all('invite_send', $invite);
-      }
-
+    if (invite_send($invite)) {
       $num_succeeded++;
     }
     else {
@@ -1454,7 +1482,6 @@ function invite_withdraw($form, &$form_state, $invite) {
     t('Withdraw'),
     t('Cancel')
   );
-  drupal_goto();
 }
 
 /**
@@ -1562,13 +1589,13 @@ function invite_create() {
   }
 
   $invite = array(
-    'reg_code' => '',
+    'reg_code' => invite_generate_code(),
     'email'   => '',
     'uid'   => $inviter->uid,
     'inviter' => $inviter,
     'invitee'   => 0,
     'created'   => REQUEST_TIME,
-    'expiry' => 0,
+    'expiry' => REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24),
     'joined'  => 0,
     'canceled'  => 0,
     'resent'  => 0,
