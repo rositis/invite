@@ -666,9 +666,7 @@ function invite_user_cancel($edit, $account, $method) {
  */
 function invite_user_delete($account) {
   // Delete any invites originating from this user.
-  db_delete('invite')
-    ->condition('uid', $account->uid)
-    ->execute();
+  invite_delete(array('uid' => $account->uid));
 
   // Clean up the notification queue.
   db_delete('invite_notifications')
@@ -713,9 +711,6 @@ function invite_process_invite($invite, $account) {
   // Update the invitation record.
   db_query("UPDATE {invite} SET email = :email, invitee = :invitee, joined = :joined WHERE reg_code = :reg_code", array(':email' => $account->mail, ':invitee' => $account->uid, ':joined' => REQUEST_TIME, ':reg_code' => $invite->reg_code));
 
-  // Delete all invites to these e-mail addresses, except this one.
-  db_query("DELETE FROM {invite} WHERE (email = :invite_email OR email = :account_mail) AND reg_code <> :reg_code", array(':invite_email' => $invite->email, ':account_mail' => $account->mail, ':reg_code' => $invite->reg_code));
-
   // Add all users who invited this particular e-mail address to the
   // notification queue.
   db_query("INSERT INTO {invite_notifications} (uid, invitee) SELECT uid, :uid FROM {invite} WHERE (email = :invite_email OR email = :account_mail) AND canceled = 0", array(':uid' => $account->uid, ':invite_email' => $invite->email, ':account_mail' => $account->mail));
@@ -759,26 +754,33 @@ function invite_target_roles($invite, $account) {
 /**
  * Delete an invite from the database.
  *
- * @param $invite
- *   The invite object or reg code to delete.
+ * @param $conditions
+ *   An array of conditions.
  */
-function invite_delete($invite) {
-  if (is_string($invite)) {
-    $invite = invite_load($invite);
-  }
+function invite_delete($conditions) {
 
-  if (empty($invite) || !is_object($invite)) {
+  if (empty($conditions) || !is_array($conditions)) {
     return;
   }
 
-  db_delete('invite')
-    ->condition('iid', $invite->iid)
-    ->execute();
+  $select_query = db_select('invite', 'i')
+    ->fields('i', array('invitee'));
+  $delete_query = db_delete('invite');
+
+  foreach ($conditions as $key => $value) {
+    $select_query = $select_query->condition($key, $value);
+    $delete_query = $delete_query->condition($key, $value);
+  }
+
+  $invitees = $select_query->execute()->fetchCol();
+  $invitees = array_filter($invitees);
+
+  $delete_query->execute();
 
   // Clean up the notification queue.
-  if ($invite->invitee) {
+  foreach ($invitees as $invitee) {
     db_delete('invite_notifications')
-      ->condition('invitee', $invite->invitee)
+      ->condition('invitee', $invitee)
       ->execute();
   }
 }

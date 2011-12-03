@@ -130,3 +130,24 @@ function example_send_invite_email() {
   // Send email to the invitee. If sending is successful, $invite is saved to the database.
   invite_send($invite);
 }
+
+/**
+ * Modify an invite.
+ */
+function example_modify_invite() {
+  // Fetch the invite.
+  $invite = invite_load($reg_code);
+
+  // Modify parameters as necessary.
+  $invite->expiry = REQUEST_TIME + (60 * 60 * 24 +7);
+
+  // Save it.
+  invite_save($invite);
+}
+
+/**
+ * Delete an invite.
+ */
+function example_delete_invite() {
+  invite_delete(array('reg_code' => $code_to_delete));
+}
