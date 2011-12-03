@@ -132,14 +132,14 @@ function invite_settings() {
     '#type' => 'radios',
     '#title' => t('<em>From</em> e-mail address'),
     '#description' => t('Choose which e-mail address will be in the From: header for the invitation mails sent; <em>site</em> or <em>inviter</em>. <em>Site</em> will use the default e-mail address of the site, whereas <em>inviter</em> will use the e-mail address of the user who is sending the invitation. Alternatively, you can set this value manually by clicking on <em>advanced settings</em> below.'),
-    '#options' => array(t('site'), t('inviter')),
+    '#options' => array(t('Site'), t('Inviter')),
     '#default_value' => variable_get('invite_use_users_email', 0),
   );
   $form['email']['invite_use_users_email_replyto'] = array(
     '#type' => 'radios',
     '#title' => t('<em>Reply-To</em> e-mail address'),
     '#description' => t('Choose which e-mail address will be in the Reply-To: header for the invitation mails sent; <em>site</em> or <em>inviter</em>. <em>Site</em> will use the default e-mail address of the site, whereas <em>inviter</em> will use the e-mail address of the user who is sending the invitation. Alternatively, you can set this value manually by clicking on <em>advanced settings</em> below.'),
-    '#options' => array(t('site'), t('inviter')),
+    '#options' => array(t('Site'), t('Inviter')),
     '#default_value' => variable_get('invite_use_users_email_replyto', 0),
   );
   $form['email']['advanced'] = array(
@@ -147,7 +147,7 @@ function invite_settings() {
     '#title' => t('Advanced settings'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
-    '#description' => t('<strong>Note:</strong> unless these fields are blank, they will override the radio button choices above.'),
+    '#description' => t('<strong>Note:</strong> The addresses defined here will replace the site e-mail, if it is selected above.'),
   );
   $form['email']['advanced']['invite_manual_from'] = array(
     '#type' => 'textfield',
