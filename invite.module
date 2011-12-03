@@ -575,8 +575,20 @@ function invite_send($invite) {
     $from = NULL;
   }
 
-  // Send e-mail.
   $params = array('invite' => $invite);
+
+  // Override Reply-To address.
+  if (!variable_get('invite_use_users_email_replyto', 0)) {
+    $reply_to = variable_get('invite_manual_reply_to', '');
+  }
+  elseif (!empty($invite->inviter->mail)) {
+    $reply_to = $invite->inviter->mail;
+  }
+  if (!empty($reply_to)) {
+    $params['reply-to'] = $reply_to;
+  }
+
+  // Send e-mail.
   $result = drupal_mail('invite', 'invite', $invite->email, $language, $params, $from, TRUE);
   if ($result['result']) {
     // Save invite.
@@ -1438,15 +1450,8 @@ function invite_mail($key, &$message, $params) {
 
   $invite = $params['invite'];
 
-  // Override Reply-To address.
-  if (!variable_get('invite_use_users_email_replyto', 0)) {
-    $reply_to = variable_get('invite_manual_reply_to', '');
-  }
-  elseif ($user->uid) {
-    $reply_to = $user->mail;
-  }
-  if ($reply_to) {
-    $message['headers']['Reply-To'] = $reply_to;
+  if (!empty($params['reply-to'])) {
+    $message['headers']['Reply-To'] = $params['reply-to'];
   }
 
   $message['subject'] = $invite->data['subject'];
