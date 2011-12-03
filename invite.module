@@ -1189,7 +1189,7 @@ function invite_form_validate($form, &$form_state) {
 
     if (!empty($emails)) {
       // Filter out already invited users, but pass validation.
-      $failed_emails = _invite_filter_invited_emails($user->uid, $emails);
+      $failed_emails = _invite_filter_invited_emails($emails);
       $emails = array_diff($emails, $failed_emails);
 
       if (count($failed_emails)) {
@@ -1328,18 +1328,16 @@ function _invite_get_emails($string) {
 }
 
 /**
- * Filters out e-mails that have already been invited by a user.
+ * Filters out e-mails that have already been invited.
  *
- * @param $uid
- *   The user id of the user whose invites should be searched.
  * @param $emails
  *   An array of e-mails to validate.
  * @return
  *   An array of e-mails that have already been invited by the user or NULL
  *   on error.
  */
-function _invite_filter_invited_emails($uid, $emails) {
-  if (!is_numeric($uid) || !is_array($emails)) {
+function _invite_filter_invited_emails($emails) {
+  if (!is_array($emails)) {
     return NULL;
   }
 
@@ -1348,7 +1346,6 @@ function _invite_filter_invited_emails($uid, $emails) {
   $results = db_select('invite', 'i')
     ->fields('i', array('email'))
     ->condition('email', $emails, 'IN')
-    ->condition('uid', $uid)
     ->condition('canceled', '0')
     ->execute();
 
