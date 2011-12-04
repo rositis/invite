@@ -14,6 +14,9 @@
 function invite_user_overview($page, $account) {
   global $user;
 
+  drupal_add_css(drupal_get_path('module', 'invite') . '/css/invite.css');
+  drupal_add_js(drupal_get_path('module', 'invite') . '/js/invite.js');
+
   $rows = array();
   $profile_access = user_access('access user profiles');
   $allow_delete = user_access('withdraw own invitations');
@@ -84,14 +87,17 @@ function invite_user_overview($page, $account) {
         if ($expired && $account->uid == $user->uid) {
           $operations[] = l(t('resend'), "invite/resend/$invite->reg_code");
         }
-
+        if ($page ==  'pending') {
+          $operations[] = l(t('show link'), 'invite/accept/' . $invite->reg_code, array('attributes' => array('class' => array('invite-reg-link'), 'title' => t('Registration link for @email', array('@email' => $invite->email))), 'absolute' => TRUE));
+        }
+        
         $row[] = implode(' | ', $operations);
         break;
     }
     $rows[] = $row;
   }
 
-  return theme('invite_user_overview', array('items' => $rows));
+  return theme('invite_user_overview', array('items' => $rows, 'page' => $page));
 }
 
 /**
@@ -154,14 +160,25 @@ function invite_resend($invite) {
  * @ingroup themeable
  */
 function theme_invite_user_overview($variables) {
+  $output = '';
   $items = $variables['items'];
+
+  if ($variables['page'] == 'pending') {
+    $output .= '
+    <div id="invite-reg-link-container" class="messages">
+      <a href="" id="invite-reg-link-close">' . t('Hide') . '</a>
+      <div id="invite-reg-title"></div>
+      <div id="invite-reg-link"></div>
+    </div>';
+  }
+
   if (count($items) > 0) {
     $headers = array(t('E-mail'), t('Status'), t('Operations'));
-    $output  = theme('table', array('header' => $headers, 'rows' => $items, 'attributes' => array('id' => 'invites')));
+    $output  .= theme('table', array('header' => $headers, 'rows' => $items, 'attributes' => array('id' => 'invite-user-overview')));
     $output .= theme('pager');
   }
   else {
-    $output = t('No invitations available.');
+    $output .= t('No invitations available.');
   }
 
   return $output;

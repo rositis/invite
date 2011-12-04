@@ -79,7 +79,7 @@ function invite_theme() {
       'render element' => 'form',
     ),
     'invite_user_overview' => array(
-      'variables' => array('items' => NULL),
+      'variables' => array('items' => NULL, 'page' => NULL),
       'file' => 'invite.pages.inc',
     ),
   );
