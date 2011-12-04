@@ -90,7 +90,7 @@ function invite_user_overview($page, $account) {
         if ($page ==  'pending') {
           $operations[] = l(t('show link'), 'invite/accept/' . $invite->reg_code, array('attributes' => array('class' => array('invite-reg-link'), 'title' => t('Registration link for @email', array('@email' => $invite->email))), 'absolute' => TRUE));
         }
-        
+
         $row[] = implode(' | ', $operations);
         break;
     }
@@ -144,7 +144,7 @@ function invite_resend($invite) {
   global $user;
 
   // Inviter must match current user and invitation must have expired.
-  if ($invite->uid == $user->uid && $invite->expiry < REQUEST_TIME) {
+  if ($invite->uid == $user->uid && $invite->expiry < REQUEST_TIME && $invite->joined == 0 && $invite->canceled == 0) {
     return drupal_get_form('invite_form', 'page', $invite);
   }
 
