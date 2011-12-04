@@ -864,10 +864,6 @@ function invite_form($form, &$form_state, $op = 'page', $edit = array()) {
     }
   }
 
-  $form['resent'] = array(
-    '#type' => 'value',
-    '#value' => $edit ? $edit['resent'] + 1 : 0,
-  );
   $form['reg_code'] = array(
     '#type' => 'value',
     '#value' => $edit ? $edit['reg_code'] : NULL,
@@ -1019,7 +1015,7 @@ function invite_page_form($remaining_invites, $edit = array()) {
       $form['email']['#maxlength'] = 64;
     }
     if ($failed_emails) {
-      $form['email']['#attributes']['class'] = 'error';
+      $form['email']['#attributes']['class'][] = 'error';
     }
   }
   else {
@@ -1136,7 +1132,7 @@ function invite_form_validate($form, &$form_state) {
 
   $emails = _invite_get_emails($form_state['values']['email']);
 
-  if (!$form_state['values']['resent']) {
+  if (!$form_state['values']['reg_code']) {
     if (count($emails) > 0) {
       // Filter out already registered users, but pass validation.
       $failed_emails = _invite_filter_registered_emails($emails);
@@ -1237,7 +1233,7 @@ function invite_form_submit($form, &$form_state) {
   }
 
   if ($num_succeeded) {
-    $message = format_plural($num_succeeded, 'Your invitation has been successfully sent. You will be notified when the invitee joins the site.', '@count invitations have been successfully sent. You will be notified when any invitee joins the site.');
+    $message = format_plural($num_succeeded, 'Your invitation has been successfully sent.' . ($user->uid ? ' You will be notified when the invitee joins the site.' : ''), '@count invitations have been successfully sent.' . ($user->uid ? ' You will be notified when any invitee joins the site.' : ''));
     drupal_set_message($message);
   }
   if ($num_failed) {
