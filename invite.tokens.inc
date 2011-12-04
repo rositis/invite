@@ -23,19 +23,15 @@ function invite_tokens($type, $tokens, array $data = array(), array $options = a
           break;
 
         case 'invite-mail':
-          $replacements[$original] = $invite->email;
-          break;
-
-        case 'invite-message':
-          $replacements[$original] = check_plain($invite->data['message']);
-          break;
-
-        case 'invite-message-raw':
-          $replacements[$original] = $invite->data['message'];
+          if (!empty($invite->email)) {
+            $replacements[$original] = $invite->email;
+          }
           break;
 
         case 'join-link':
-          $replacements[$original] = url('invite/accept/' . $invite->reg_code, array('absolute' => TRUE));
+          if (!empty($invite->reg_code)) {
+            $replacements[$original] = url('invite/accept/' . $invite->reg_code, array('absolute' => TRUE));
+          }
           break;
 
       }

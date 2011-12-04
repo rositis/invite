@@ -75,9 +75,6 @@ function _invite_module_help() {
  */
 function invite_theme() {
   return array(
-    'invite_form' => array(
-      'render element' => 'form',
-    ),
     'invite_user_overview' => array(
       'variables' => array('items' => NULL, 'page' => NULL),
       'file' => 'invite.pages.inc',
@@ -875,6 +872,7 @@ function invite_form($form, &$form_state, $op = 'page', $edit = array()) {
     '#type' => 'value',
     '#value' => $edit ? $edit['reg_code'] : NULL,
   );
+
   if ($remaining_invites != INVITE_UNLIMITED) {
     $form['remaining_invites'] = array(
       '#type' => 'value',
@@ -982,17 +980,16 @@ function invite_page_form($remaining_invites, $edit = array()) {
   }
 
   // Sender e-mail address.
-  if ($user->uid && variable_get('invite_use_users_email', 0)) {
+  if (!variable_get('invite_use_users_email', 0)) {
+    $from = variable_get('invite_manual_from', '');
+  }
+  elseif (!empty($user->mail)) {
     $from = $user->mail;
   }
-  else {
+  if (empty($from)) {
     $from = variable_get('site_mail', ini_get('sendmail_from'));
   }
-  // Personalize displayed e-mail address.
-  // @see http://drupal.org/project/pmail
-  if (module_exists('pmail')) {
-    $from = personalize_email($from);
-  }
+
   $form['from'] = array(
     '#type' => 'item',
     '#title' => t('From'),
@@ -1004,7 +1001,7 @@ function invite_page_form($remaining_invites, $edit = array()) {
     $failed_emails = '';
     $allow_multiple = user_access('send mass invitations');
     if (isset($_SESSION['invite_failed_emails'])) {
-      $failed_emails = implode("\n", (array) unserialize($_SESSION['invite_failed_emails']));
+      $failed_emails = implode(', ', (array) unserialize($_SESSION['invite_failed_emails']));
       unset($_SESSION['invite_failed_emails']);
     }
     $form['email'] = array(
@@ -1061,7 +1058,7 @@ function invite_page_form($remaining_invites, $edit = array()) {
     );
   }
   else {
-    $form['subject-item'] = array(
+    $form['subject_markup'] = array(
       '#type' => 'item',
       '#title' => t('Subject'),
       '#markup' => check_plain($subject),
@@ -1072,15 +1069,11 @@ function invite_page_form($remaining_invites, $edit = array()) {
     );
   }
 
-  // Message body.
-  $form['body'] = array(
-    '#type' => 'item',
-    '#title' => t('Message'),
-  );
   $form['message'] = array(
+    '#title' => t('Message'),
     '#type' => 'textarea',
-    '#default_value' => ($edit && !empty($edit['data']['message'])) ? $edit['data']['message'] : '',
-    '#description' => format_plural($allow_multiple ? 1 : 99, 'This message will be added to the mail sent to the person you are inviting.', 'This message will be added to the mail sent to the persons you are inviting.'),
+    '#default_value' => ($edit && !empty($edit['data']['message'])) ? $edit['data']['message'] : token_replace(_invite_get_mail_template(), invite_token_data()),
+    '#description' => t('This is the message the invitation email will contain. The <i>[invite:join-link]</i> token in the message will be replaced by the registration link the recipient can use to join. Make sure this token is always included in the message.'),
   );
 
   $form['submit'] = array(
@@ -1130,51 +1123,6 @@ function invite_block_form($remaining_invites) {
   );
 
   return $form;
-}
-
-/**
- * Theme function for the invite form.
- *
- * @ingroup themeable
- */
-function theme_invite_form($variables) {
-  $form = $variables['form'];
-
-  $output = '';
-  // @TODO: This needs to be updated for D7
-  $op = $form['#op'];
-
-  if ($op == 'page') {
-    // Show form elements.
-    $output .= drupal_render($form['remaining_invites_markup']);
-    $output .= drupal_render($form['remaining_invites']);
-    $output .= drupal_render($form['from']);
-    if (isset($form['email_markup'])) {
-      $output .= drupal_render($form['email_markup']);
-    }
-    $output .= drupal_render($form['email']);
-    $output .= drupal_render($form['subject-item']);
-    $output .= drupal_render($form['subject']);
-
-    // Show complete invitation message.
-    $output .= drupal_render($form['body']);
-    $output .= '<div class="invite-message"><div class="opening">';
-
-    // Prepare invitation message.
-    $message_form = "</p></div>\n" . drupal_render($form['message']) . "\n" . '<div class="closing"><p>';
-    $body = _filter_autop(t(_invite_get_mail_template()));
-
-    // Perform token replacement on message body.
-    $types = _invite_token_types(array('data' => array('message' => $message_form)));
-    $output .= token_replace($body, $types);
-
-    $output .= "</div></div>\n";
-  }
-
-  // Render all missing form elements.
-  $output .= drupal_render_children($form);
-
-  return $output;
 }
 
 /**
@@ -1259,8 +1207,6 @@ function invite_form_submit($form, &$form_state) {
     $num_failed = count($failed_emails);
   }
 
-  $subject = isset($form_state['values']['subject']) ? trim($form_state['values']['subject']) : invite_get_subject();
-  $message = isset($form_state['values']['message']) ? trim($form_state['values']['message']) : NULL;
 
   foreach ($form_state['values']['valid_emails'] as $email) {
     // Create or load the invite object.
@@ -1268,14 +1214,14 @@ function invite_form_submit($form, &$form_state) {
       $invite = invite_load($form_state['values']['reg_code']);
 
       $invite->expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
-      $invite->data = array('subject' => $subject, 'message' => $message);
     }
     else {
       $invite = invite_create();
 
       $invite->email = $email;
-      $invite->data = array('subject' => $subject, 'message' => $message);
     }
+
+    $invite->data = array('subject' => trim($form_state['values']['subject']), 'message' => token_replace($form_state['values']['message'], invite_token_data($invite)));
 
     if (invite_send($invite)) {
       $num_succeeded++;
@@ -1439,9 +1385,9 @@ function _invite_validate_emails($sql, &$emails) {
  * @return
  *   The e-mail subject.
  */
-function invite_get_subject($substitutions = array()) {
+function invite_get_subject($args = array()) {
   $subject = variable_get('invite_subject', t('[invite:inviter-raw] has sent you an invite!'));
-  return token_replace($subject, _invite_token_types($substitutions));
+  return token_replace($subject, invite_token_data($args));
 }
 
 /**
@@ -1472,10 +1418,7 @@ function invite_mail($key, &$message, $params) {
   }
 
   $message['subject'] = $invite->data['subject'];
-
-  $template = t(_invite_get_mail_template());
-  $tokens = _invite_token_types($invite);
-  $message['body'][] = token_replace($template, $tokens);
+  $message['body'][] = $invite->data['message'];
 }
 
 /**
@@ -1553,38 +1496,38 @@ function invite_count($uid, $op) {
  *   The localized e-mail body.
  */
 function _invite_get_mail_template() {
-  $template = t("Your friend, [invite:inviter-raw], has invited you to join [site:name] at [site:url].
+  $template = t("[invite:inviter-raw] has invited you to join [site:name] at [site:url].
 
 To become a member of [site:name], click the link below or paste it into the address bar of your browser.
 
 [invite:join-link]
-
-----------
-[invite:invite-message-raw]");
+");
 
   return variable_get('invite_default_mail_template', $template);
 }
 
 /**
- * Provide token types for use in invite message replacements.
+ * Provide token data for use in invite message replacements.
  *
  * @param $args
  *   Associative array of additional arguments to merge in the invite object, or
  *   a complete invite object.
  * @return
- *   Array of token types suitable as input for token_replace().
+ *   Array of tokens suitable as input for token_replace().
  */
-function _invite_token_types($args = array()) {
+function invite_token_data($args = array()) {
   global $user;
 
   if (is_object($args)) {
+    // $args is an invite object.
     $invite = $args;
   }
   else {
+    // Create an empty invite for token replacement.
     $invite = invite_create();
 
-    // Reg_code placeholder for empty invites.
-    $invite->reg_code = '--invite-code--';
+    // If no specific invite is provided for replacement, the newly generated reg_code is irrelevant here.
+    unset($invite->reg_code);
   }
 
   if (is_array($args)) {
@@ -1593,7 +1536,15 @@ function _invite_token_types($args = array()) {
     }
   }
 
-  return array('user' => $user, 'profile' => $user, 'invite' => $invite);
+  if (empty($invite->inviter) && !empty($invite->uid)) {
+    $invite->inviter = user_load($invite->uid);
+  }
+
+  return array(
+    'user' => empty($invite->inviter) ? $user : $invite->inviter,
+    'profile' => empty($invite->inviter) ? $user : $invite->inviter,
+    'invite' => $invite
+  );
 }
 
 /**
