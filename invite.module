@@ -562,10 +562,13 @@ function invite_save(&$invite) {
  *
  * @param $invite
  *   Invite object.
+ * @param $send
+ *   The invitation email will be sent to the invitee only when $send is TRUE.
+ *   Otherwise, only processing is done.
  * @return
  *   TRUE, if sending was successful; FALSE otherwise..
  */
-function invite_send($invite) {
+function invite_send($invite, $send = TRUE) {
   global $language;
 
   // Check if this is an existing invite.
@@ -575,43 +578,46 @@ function invite_send($invite) {
     $invite->resent++;
   }
 
-  if (empty($invite->inviter)) {
-    $invite->inviter = user_load($invite->uid);
+  if ($send) {
+    if (empty($invite->inviter)) {
+      $invite->inviter = user_load($invite->uid);
+    }
+
+    if (!variable_get('invite_use_users_email', 0)) {
+      $from = variable_get('invite_manual_from', '');
+    }
+    elseif (!empty($invite->inviter->mail)) {
+      $from = $invite->inviter->mail;
+    }
+    if (empty($from)) {
+      // Never pass an empty string to drupal_mail()
+      $from = NULL;
+    }
+
+    $params = array('invite' => $invite);
+
+    // Override Reply-To address.
+    if (!variable_get('invite_use_users_email_replyto', 0)) {
+      $reply_to = variable_get('invite_manual_reply_to', '');
+    }
+    elseif (!empty($invite->inviter->mail)) {
+      $reply_to = $invite->inviter->mail;
+    }
+    if (!empty($reply_to)) {
+      $params['reply-to'] = $reply_to;
+    }
+
+    // Send e-mail.
+    $result = drupal_mail('invite', 'invite', $invite->email, $language, $params, $from, TRUE);
   }
 
-  if (!variable_get('invite_use_users_email', 0)) {
-    $from = variable_get('invite_manual_from', '');
-  }
-  elseif (!empty($invite->inviter->mail)) {
-    $from = $invite->inviter->mail;
-  }
-  if (empty($from)) {
-    // Never pass an empty string to drupal_mail()
-    $from = NULL;
-  }
-
-  $params = array('invite' => $invite);
-
-  // Override Reply-To address.
-  if (!variable_get('invite_use_users_email_replyto', 0)) {
-    $reply_to = variable_get('invite_manual_reply_to', '');
-  }
-  elseif (!empty($invite->inviter->mail)) {
-    $reply_to = $invite->inviter->mail;
-  }
-  if (!empty($reply_to)) {
-    $params['reply-to'] = $reply_to;
-  }
-
-  // Send e-mail.
-  $result = drupal_mail('invite', 'invite', $invite->email, $language, $params, $from, TRUE);
-  if ($result['result']) {
+  if (!$send || $result['result']) {
     // Save invite.
     invite_save($invite);
 
     // Notify other modules.
     if (!$existing_invite) {
-      module_invoke_all('invite_send', $invite);
+      module_invoke_all('invite_send', $invite, $send);
     }
 
     return TRUE;
@@ -817,7 +823,7 @@ function invite_block_view($delta = '') {
   $block = array();
   switch ($delta) {
     case 'invite':
-      if (user_access('send invitations')) {
+      if (user_access('send invitations') && arg(0) != 'invite') {
         $block = array(
           'subject' => t('Invite a friend'),
           'content' => drupal_get_form('invite_form', 'block'),
@@ -843,6 +849,38 @@ function invite_block_view($delta = '') {
 function invite_form($form, &$form_state, $op = 'page', $edit = array()) {
   global $user;
 
+  // Show registration links when the form has been submitted using the Show registration link button.
+  if (!empty($form_state['invite_show_reg_links'])) {
+    $headers = array(t('E-mail'), t('Registration link'));
+    $rows = array();
+
+    foreach ($form_state['invite_processed_invites'] as $invite) {
+      $rows[] = array(check_plain($invite->email), url('invite/accept/' . $invite->reg_code, array('absolute' => TRUE)));
+    }
+
+    if ($user->uid && user_access('track invitations')) {
+      $reg_link_note = t('You can later view the links in the list of your !link.', array('!link' => l('invites', 'user/' . $user->uid . '/invites/pending')));
+    }
+    else {
+      $reg_link_note = t('Save the links now, because you will not be able to retrieve them once you leave this page.');
+    }
+
+    $form['reg_links'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Registration links for invitees'),
+      '#description' => format_plural(count($form_state['invite_processed_invites']),
+        'Below is the registration link for the newly created invitation. Give this link to the invitee - he/she will need it to use the invitation and register.',
+        'Below are the registration links for the newly created invitations. Give these links to the invitees - they will need them to use their invitations and register.'
+        ) . ' ' . $reg_link_note,
+    );
+    $form['reg_links']['links_table'] = array(
+      '#markup' => theme('table', array('header' => $headers, 'rows' => $rows, 'attributes' => array('id' => 'invite-reg-links'))),
+    );
+
+    // Clear the form.
+    unset($form_state['input']);
+  }
+
   $form['#op'] = $op;
 
   if (!is_array($edit)) {
@@ -856,11 +894,6 @@ function invite_form($form, &$form_state, $op = 'page', $edit = array()) {
       // Hide block.
       $form['#access'] = FALSE;
       return $form;
-    }
-    elseif (!$edit) {
-      // Deny access when NOT resending an invite.
-      drupal_set_message(t("Sorry, you've reached the maximum number of invitations."), 'error');
-      drupal_goto($_SERVER['HTTP_REFERER']);
     }
   }
 
@@ -970,11 +1003,6 @@ function invite_get_role_limit($account) {
 function invite_page_form($remaining_invites, $edit = array()) {
   global $user;
 
-  // Remaining invites.
-  if ($remaining_invites != INVITE_UNLIMITED) {
-    $form['remaining_invites_markup']['#value'] = format_plural($remaining_invites, 'You have 1 invite remaining.', 'You have @count invites remaining.');
-  }
-
   // Sender e-mail address.
   if (!variable_get('invite_use_users_email', 0)) {
     $from = variable_get('invite_manual_from', '');
@@ -1072,10 +1100,29 @@ function invite_page_form($remaining_invites, $edit = array()) {
     '#description' => t('This is the message the invitation email will contain. The <i>[invite:join-link]</i> token in the message will be replaced by the registration link the recipient can use to join. Make sure this token is always included in the message.'),
   );
 
+  // Remaining invites.
+  if ($remaining_invites != INVITE_UNLIMITED) {
+    $form['remaining_invites_markup'] = array(
+      '#type' => 'item',
+      '#markup' => format_plural($remaining_invites, 'You have 1 invite remaining.', 'You have @count invites remaining.'),
+    );
+  }
+
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Send invite'),
+    '#value' => t('Send invite in email'),
   );
+  $form['submit_show'] = array(
+    '#type' => 'submit',
+    '#value' => t('Show registration link'),
+  );
+
+  if ($remaining_invites == 0 && !$edit) {
+    $form['submit']['#disabled'] = TRUE;
+    $form['submit_show']['#disabled'] = TRUE;
+
+    drupal_set_message('You have no more invitations left.', 'error');
+  }
 
   return $form;
 }
@@ -1191,8 +1238,10 @@ function invite_form_validate($form, &$form_state) {
 function invite_form_submit($form, &$form_state) {
   global $user, $language;
 
+  $show_only = ($form_state['clicked_button']['#value'] == t('Show registration link'));
+
   // Set this now, so other modules can change it later.
-  $form_state['redirect'] = 'invite';
+  // $form_state['redirect'] = 'invite';
 
   $failed_emails = array();
   $num_failed = $num_succeeded = 0;
@@ -1203,7 +1252,7 @@ function invite_form_submit($form, &$form_state) {
     $num_failed = count($failed_emails);
   }
 
-
+  $processed_invites = array();
   foreach ($form_state['values']['valid_emails'] as $email) {
     // Create or load the invite object.
     if (!empty($form_state['values']['reg_code'])) {
@@ -1219,12 +1268,15 @@ function invite_form_submit($form, &$form_state) {
 
     $invite->data = array('subject' => trim($form_state['values']['subject']), 'message' => token_replace($form_state['values']['message'], invite_token_data($invite)));
 
-    if (invite_send($invite)) {
+    if (invite_send($invite, !$show_only)) {
       $num_succeeded++;
+      $processed_invites[] = $invite;
     }
     else {
       $failed_emails[] = $email;
     }
+
+
   }
 
   // Store failed e-mails for re-display.
@@ -1233,15 +1285,22 @@ function invite_form_submit($form, &$form_state) {
   }
 
   if ($num_succeeded) {
-    $message = format_plural($num_succeeded, 'Your invitation has been successfully sent.' . ($user->uid ? ' You will be notified when the invitee joins the site.' : ''), '@count invitations have been successfully sent.' . ($user->uid ? ' You will be notified when any invitee joins the site.' : ''));
-    drupal_set_message($message);
+    if (!$show_only) {
+      $message = format_plural($num_succeeded, 'Your invitation has been successfully sent.' . ($user->uid ? ' You will be notified when the invitee joins the site.' : ''), '@count invitations have been successfully sent.' . ($user->uid ? ' You will be notified when any invitee joins the site.' : ''));
+      drupal_set_message($message);
+    }
+    else {
+      $form_state['invite_show_reg_links'] = TRUE;
+      $form_state['invite_processed_invites'] = $processed_invites;
+      $form_state['rebuild'] = TRUE;
+      drupal_set_message('Your invitation has been successfully created.');
+    }
   }
   if ($num_failed) {
     $message = format_plural($num_failed, 'The entered e-mail address is invalid. Please correct it.', '@count entered e-mail addresses are invalid. Please correct them.');
     drupal_set_message($message, 'error');
   }
-  elseif (user_access('track invitations') && $user->uid) {
-    // Everything went well: redirect to pending invites page.
+  elseif (!$show_only && user_access('track invitations') && $user->uid) {
     $form_state['redirect'] = "user/$user->uid/invites/pending";
   }
 }

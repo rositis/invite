@@ -16,8 +16,11 @@
  *
  * @param $invite
  *   The invite object that has just been created.
+ * @param $send
+ *   TRUE, if an invitation email has been sent; FALSE, if only a registration
+ *   link has been generated.
  */
-function hook_invite_send($invite) {
+function hook_invite_send($invite, $send) {
 }
 
 /**
