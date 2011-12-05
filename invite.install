@@ -440,3 +440,12 @@ function invite_update_7200() {
   );
   db_add_field('invite', 'iid', $spec, $new_keys);
 }
+
+/**
+ * Change id of 'Invitees only' option on user settings form.
+ */
+function invite_update_7201() {
+  if (variable_get('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) === '1-inviteonly') {
+    variable_set('user_register', USER_REGISTER_INVITATION_ONLY);
+  }
+}
