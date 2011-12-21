@@ -28,6 +28,12 @@ function invite_tokens($type, $tokens, array $data = array(), array $options = a
           }
           break;
 
+        case 'invite-message':
+          if (!empty($invite->message)) {
+            $replacements[$original] = $invite->message;
+          }
+        break;
+
         case 'join-link':
           if (!empty($invite->reg_code)) {
             $replacements[$original] = url('invite/accept/' . $invite->reg_code, array('absolute' => TRUE));

@@ -125,6 +125,12 @@ function invite_settings() {
     '#required' => TRUE,
     '#description' => t('Use the syntax [token] if you want to insert a replacement pattern.'),
   );
+  $form['email']['invite_mail_template_editable'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Editable mail template'),
+    '#description' => t('Choose whether users should be able to customize the mail template or enter a message that can then be embedded as a token.'),
+    '#default_value' => variable_get('invite_mail_template_editable', TRUE),
+  );
   $form['email']['token_help'] = array(
     '#title' => t('Replacement patterns'),
     '#type' => 'fieldset',

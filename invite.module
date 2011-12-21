@@ -1093,12 +1093,16 @@ function invite_page_form($remaining_invites, $edit = array()) {
     );
   }
 
+  $default_message = variable_get('invite_mail_template_editable', TRUE) ? token_replace(_invite_get_mail_template(), invite_token_data()) : '';
   $form['message'] = array(
     '#title' => t('Message'),
     '#type' => 'textarea',
-    '#default_value' => ($edit && !empty($edit['data']['message'])) ? $edit['data']['message'] : token_replace(_invite_get_mail_template(), invite_token_data()),
+    '#default_value' => ($edit && !empty($edit['data']['message'])) ? $edit['data']['message'] : $default_message,
     '#description' => t('This is the message the invitation email will contain. The <i>[invite:join-link]</i> token in the message will be replaced by the registration link the recipient can use to join. Make sure this token is always included in the message.'),
   );
+  if (!variable_get('invite_mail_template_editable', TRUE)) {
+    $form['message']['#description'] = t('A personal message to be included in inviation e-mail.');
+  }
 
   // Remaining invites.
   if ($remaining_invites != INVITE_UNLIMITED) {
@@ -1266,7 +1270,14 @@ function invite_form_submit($form, &$form_state) {
       $invite->email = $email;
     }
 
-    $invite->data = array('subject' => trim($form_state['values']['subject']), 'message' => token_replace($form_state['values']['message'], invite_token_data($invite)));
+    if (variable_get('invite_mail_template_editable', TRUE)) {
+      $message = $form_state['values']['message'];
+    }
+    else {
+      $message = _invite_get_mail_template();
+      $invite->message = $form_state['values']['message'];
+    }
+    $invite->data = array('subject' => trim($form_state['values']['subject']), 'message' => token_replace($message, invite_token_data($invite)));
 
     if (invite_send($invite, !$show_only)) {
       $num_succeeded++;
