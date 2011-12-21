@@ -128,7 +128,7 @@ function invite_settings() {
   $form['email']['invite_mail_template_editable'] = array(
     '#type' => 'checkbox',
     '#title' => t('Editable mail template'),
-    '#description' => t('Choose whether users should be able to customize the mail template or enter a message that can then be embedded as a token.'),
+    '#description' => t('Choose whether users should be able to edit the mail template or just enter a message that can then be embedded as a token. If this option is unchecked, be sure to include [invite:invite-message] in the mail template.'),
     '#default_value' => variable_get('invite_mail_template_editable', TRUE),
   );
   $form['email']['token_help'] = array(

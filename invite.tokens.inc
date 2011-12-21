@@ -29,10 +29,13 @@ function invite_tokens($type, $tokens, array $data = array(), array $options = a
           break;
 
         case 'invite-message':
-          if (!empty($invite->message)) {
-            $replacements[$original] = $invite->message;
+          if (!empty($invite->data['user_message'])) {
+            $replacements[$original] = $invite->data['user_message'];
           }
-        break;
+          else {
+            $replacements[$original] = '';
+          }
+          break;
 
         case 'join-link':
           if (!empty($invite->reg_code)) {
@@ -76,11 +79,6 @@ function invite_token_info() {
   $tokens['invite-message'] = array(
     'name' => t('Invite message'),
     'description' => t('The personal message for the invitee.'),
-  );
-
-  $tokens['invite-message-raw'] = array(
-    'name' => t('Invite message raw'),
-    'description' => t('The personal message for the invitee as unfiltered text. WARNING - raw user input.'),
   );
 
   $tokens['join-link'] = array(

@@ -1101,7 +1101,7 @@ function invite_page_form($remaining_invites, $edit = array()) {
     '#description' => t('This is the message the invitation email will contain. The <i>[invite:join-link]</i> token in the message will be replaced by the registration link the recipient can use to join. Make sure this token is always included in the message.'),
   );
   if (!variable_get('invite_mail_template_editable', TRUE)) {
-    $form['message']['#description'] = t('A personal message to be included in inviation e-mail.');
+    $form['message']['#description'] = t('A personal message to be included in the invitation e-mail.');
   }
 
   // Remaining invites.
@@ -1270,14 +1270,15 @@ function invite_form_submit($form, &$form_state) {
       $invite->email = $email;
     }
 
+    $invite->data = array('subject' => trim($form_state['values']['subject']), 'message' => '');
     if (variable_get('invite_mail_template_editable', TRUE)) {
       $message = $form_state['values']['message'];
     }
     else {
       $message = _invite_get_mail_template();
-      $invite->message = $form_state['values']['message'];
+      $invite->data['user_message'] = $form_state['values']['message'];
     }
-    $invite->data = array('subject' => trim($form_state['values']['subject']), 'message' => token_replace($message, invite_token_data($invite)));
+    $invite->data['message'] = token_replace($message, invite_token_data($invite));
 
     if (invite_send($invite, !$show_only)) {
       $num_succeeded++;
@@ -1567,6 +1568,10 @@ function _invite_get_mail_template() {
 To become a member of [site:name], click the link below or paste it into the address bar of your browser.
 
 [invite:join-link]
+
+The inviter's message to you:
+
+[invite:invite-message]
 ");
 
   return variable_get('invite_default_mail_template', $template);
