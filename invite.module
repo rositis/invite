@@ -1192,8 +1192,7 @@ function invite_form_validate($form, &$form_state) {
       if (count($failed_emails)) {
         $error = format_plural(count($failed_emails), 'The following recipient is already a member:', 'The following recipients are already members:') . '<br />';
         foreach ($failed_emails as $key => $email) {
-          $account = user_load_by_mail($email);
-          $failed_emails[$key] = theme('username', array('account' => $account)) . ' (' . check_plain($email) . ')';
+          $failed_emails[$key] = check_plain($email);
         }
         $error .= implode(', ', $failed_emails);
         drupal_set_message($error, 'error');
