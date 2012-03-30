@@ -122,7 +122,7 @@ function invite_accept($invite) {
         break;
 
       case INVITE_USED:
-        drupal_set_message(t('This invitation has already been used.'));
+        drupal_set_message(t('This invitation has already been used.'), 'error');
         break;
 
       case INVITE_EXPIRED:
