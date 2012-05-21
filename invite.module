@@ -191,6 +191,15 @@ function invite_menu() {
     'file' => 'invite.pages.inc',
   );
 
+  $items['invite/invite_user_autocomplete'] = array(
+    'title' => 'Invite User autocomplete',
+    'page callback' => 'invite_user_autocomplete',
+    'access callback' => 'user_access',
+    'access arguments' => array('access user profiles'),
+    'type' => MENU_CALLBACK,
+    'file' => 'invite.pages.inc',
+  );
+
   // User profile tabs
   $items['user/%user/invites'] = array(
     'title' => 'Invitations',
@@ -1679,4 +1688,72 @@ function invite_invoke_all($hook, &$a1, &$a2, &$a3) {
   }
 
   return $return;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function invite_form_user_profile_form_alter(&$form, &$form_state){
+  $account = $form['#user'];
+
+  if (user_access('administer invitations')) {
+    $invite = db_select('invite', 'i')
+      ->fields('i')
+      ->condition('invitee', $account->uid)
+      ->execute()
+      ->fetchObject();
+
+    $default_value = '';
+    if(!empty($invite)) {
+      $inviter = user_load($invite->uid);
+      $default_value = $inviter->name;
+    }
+
+    $form['inviter'] = array(
+      '#type' => 'textfield',
+      '#size' => 120,
+      '#title' => t('Inviter'),
+      '#default_value' => $default_value,
+      '#description' => t('The username of the inviter. You can type the name or email to search.'),
+      '#element_validate' => array('invite_inviter_validate'),
+      '#autocomplete_path' => 'invite/invite_user_autocomplete',
+    );
+    if (!empty($default_value)) {
+      $form['inviter']['#disabled'] = TRUE;
+    }
+  }
+  $form['#submit'] = array('invite_user_form_submit');
+}
+
+/**
+ * Implements the validate function associated with user_profile_form.
+ */
+function invite_inviter_validate($element, &$form_state, $form) {
+  if (!empty($element['#value'])) {
+    $inviter = user_load_by_name($form_state['values']['inviter']);
+    if (empty($inviter)) {
+      form_set_error('inviter', t('An account with that email address does not exist.'));
+    } else {
+      $form_state['inviter_account'] = $inviter;
+    }
+  }
+}
+
+/**
+ * Implements the submit function associated with user_profile_form.
+ */
+function invite_user_form_submit($form, &$form_state) {
+  $account = $form['#user'];
+
+  if (empty($form['inviter']['#default_value']) && !empty($form_state['inviter_account'])) {
+    $inviter = $form_state['inviter_account'];
+    if(!empty($inviter->uid)) {
+      $invite = invite_create();
+      $invite->email = $account->mail;
+      $invite->uid = $inviter->uid;
+      $invite->invitee = $account->uid;
+      $invite->joined = REQUEST_TIME;
+      invite_save($invite);
+    }
+  }
 }

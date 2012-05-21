@@ -393,13 +393,16 @@ function invite_admin_details_filter_form($form, &$form_state, $uid, $filter) {
     '#prefix' => '<div class="container-inline">',
     '#suffix' => '</div>',
   );
+
   $form['filter']['filter'] = array(
     '#markup' => check_plain($filter),
   );
+
   $form['filter']['op'] = array(
     '#type' => 'button',
     '#value' => t('Clear'),
     '#prefix' => ' ',
   );
+
   return $form;
 }
