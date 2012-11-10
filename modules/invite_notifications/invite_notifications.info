@@ -1,0 +1,9 @@
+name = Invite Notifications
+description = Process notifications for Invite module.
+core = 7.x
+
+files[] = invite_notifications.module
+
+;configure = admin/config/people/invite
+
+dependencies[] = invite
