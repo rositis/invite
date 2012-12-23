@@ -52,6 +52,12 @@ function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
     '#description' => t('A unique machine-readable name for this invite type. It must only contain lowercase letters, numbers, and underscores.'),
   );
 
+  $form['description'] = array(
+    '#type' => 'textarea',
+    '#default_value' => isset($invite_type->description) ? $invite_type->description : '',
+    '#description' => t('Description about the invite type.'),
+  );
+
   $form['invite_sending_controller'] = array(
     '#title' => t('Sending method'),
     '#type' => 'checkboxes',
@@ -59,12 +65,6 @@ function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
     '#description' => t('Invitation processing plugin.'),
     '#options' => $invite_sending_controllers,
     '#required' => TRUE,
-  );
-
-  $form['description'] = array(
-    '#type' => 'textarea',
-    '#default_value' => isset($invite_type->description) ? $invite_type->description : '',
-    '#description' => t('Description about the invite type.'),
   );
 
   $form['actions'] = array('#type' => 'actions');

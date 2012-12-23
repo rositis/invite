@@ -21,10 +21,10 @@ function invite_by_email_settings_form() {
     '#required' => TRUE,
   );
 
-  $form['invite_default_mail_template'] = array(
+  $form['invite_default_mail_body'] = array(
     '#type' => 'textarea',
     '#title' => t('Mail template'),
-    '#default_value' => variable_get('invite_default_mail_template', ''),
+    '#default_value' => variable_get('invite_default_mail_body', ''),
     '#required' => TRUE,
     '#description' => t('Use the syntax [token] if you want to insert a replacement pattern.'),
   );

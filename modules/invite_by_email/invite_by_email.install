@@ -4,7 +4,7 @@
  * Implements hook_install().
  */
 function invite_by_email_install() {
-  variable_set('invite_default_mail_template', t(<<<TEMPLATE
+  variable_set('invite_default_mail_body', t(<<<TEMPLATE
 [invite:inviter:name] has invited you to join [site:name] at [site:url].
 
 To become a member of [site:name], click the link below or paste it into the address bar of your browser.

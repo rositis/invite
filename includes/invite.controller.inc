@@ -225,6 +225,7 @@ class InviteType extends Entity {
     foreach ($controllers as $controller) {
       $this->invite_sending_controller[$controller->name] = $controller->name;
     }
+    $this->data = unserialize($this->data);
   }
 
   function hasSendingController($controller_name) {
@@ -240,6 +241,7 @@ class InviteType extends Entity {
   }
 
   public function save() {
+    $this->data = serialize($this->data);
     parent::save();
     $controllers = array();
     // Remove old controller entries.
