@@ -104,28 +104,21 @@ function invite_by_email_form_invite_type_form_alter(&$form, &$form_state, $invi
  */
 function invite_by_email_form_invite_type_form_submit(&$form, &$form_state) {
   if (!empty($form_state['values']['invite_sending_controller']['invite_by_email'])) {
-    invite_by_email_invite_type_create($form_state['invite_type']);
+//    $info = entity_get_info($form_state['invite_type']);
+//    invite_by_email_invite_type_create($form_state['invite_type']);
   }
-
-//  invite_by_email_invite_type_create()
-//  if ($form_state['values']['invite_sending_controller'] == 'invite_by_email') {
-//    if (empty($form['#invite_type'])) {
-//      $invite_type = $form['#invite_type'];
-//    }
-//    else {
-//      $invite_type = invite_get_types($form_state['values']['type']);
-//    }
-//    variable_set(_invite_by_email_variable_name('use_default', $invite_type), $form_state['values']['use_default']);
-//    variable_set(_invite_by_email_variable_name('message_editable', $invite_type), $form_state['values']['message_editable']);
-//  }
 }
 
 /**
- * Creates new Invite entity type.
+ * Implements hook_invite_type_save().
  *
  * @param InviteType $invite_type
  */
-function invite_by_email_invite_type_create($invite_type) {
+function invite_by_email_invite_type_save($invite_type) {
+  // Proceed only if entity contains invite_by_email controller.
+  if (!$invite_type->hasSendingController('invite_by_email')) {
+    return FALSE;
+  }
   $fields = array(
     'field_invitation_email_address' => array(
       'definition' => array(

@@ -221,9 +221,18 @@ class InviteType extends Entity {
       ->fields('isc')
       ->condition('type', array($this->type))
       ->execute();
+    $this->invite_sending_controller = array();
     foreach ($controllers as $controller) {
       $this->invite_sending_controller[$controller->name] = $controller->name;
     }
+  }
+
+  function hasSendingController($controller_name) {
+    $result = FALSE;
+    if (!empty($this->invite_sending_controller[$controller_name])) {
+      $result = TRUE;
+    }
+    return $result;
   }
 
   function isLocked() {
@@ -239,11 +248,13 @@ class InviteType extends Entity {
       ->execute();
     // Add controllers.
     foreach ($this->invite_sending_controller as $controller_name) {
+      $module = !empty($this->module) ? $this->module : '';
       if (!in_array($controller_name, $controllers)) {
         $controllers[] = $controller_name;
         db_insert('invite_sending_controller')
           ->fields(array(
             'type' => $this->type,
+            'module' => $module,
             'name' => $controller_name,
           ))
           ->execute();

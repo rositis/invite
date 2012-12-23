@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * Implements hook_install().
+ */
 function invite_by_email_install() {
   variable_set('invite_default_mail_template', t(<<<TEMPLATE
 [invite:inviter:name] has invited you to join [site:name] at [site:url].
@@ -16,36 +19,38 @@ TEMPLATE
     array(
       'type' => 'invite_by_email',
       'module' => 'invite_by_email',
-      'invite_sending_controller' => 'invite_by_email',
+      'invite_sending_controller' => array(
+        'invite_by_email' => 'invite_by_email',
+      ),
       'label' => st('Invite by e-mail'),
       'description' => st('Invitation by e-mail.'),
     ),
   );
 
   foreach ($types as $type) {
-    $type = entity_create('invite_type', $type);
-    invite_type_save($type);
+    $invite_type = entity_create('invite_type', $type);
+    if ($invite_type) {
+      $invite_type->invite_sending_controller = $type['invite_sending_controller'];
+      invite_type_save($invite_type);
+    }
   }
 }
 
+/**
+ * Implements hook_uninstall().
+ */
 function invite_by_email_uninstall() {
-  if (module_exists('invite')) {
-    $types = entity_load_multiple_by_name('invite_type');
-    $types = isset($type_name) ? reset($types) : $types;
-    foreach ($types as $type) {
-      if (!empty($type->invite_sending_controller) && $type->invite_sending_controller == 'invite_by_email') {
-        entity_delete('invite_type', $type->type);
-        variable_del('invite_type_' . $type->type . '_' . $type->invite_sending_controller . '_processed');
-      }
-    }
+  db_delete('invite_sending_controller')
+    ->condition('name', 'invite_by_email')
+    ->execute();
 
-    $fields = array(
-      'field_invitation_email_address',
-      'field_invitation_email_subject',
-      'field_invitation_email_body',
-    );
-    foreach ($fields as $field) {
-      field_delete_field($field);
-    }
+  $fields = array(
+    'field_invitation_email_address',
+    'field_invitation_email_subject',
+    'field_invitation_email_body',
+  );
+
+  foreach ($fields as $field) {
+    field_delete_field($field);
   }
 }
