@@ -1,6 +1,7 @@
 name = Invite
 description = Allow users to invite others on site
 core = 7.x
+package = Invite
 
 files[] = invite.module
 files[] = includes/invite.controller.inc

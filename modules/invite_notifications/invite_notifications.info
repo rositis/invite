@@ -1,6 +1,7 @@
 name = Invite Notifications
 description = Process notifications for Invite module.
 core = 7.x
+package = Invite
 
 files[] = invite_notifications.module
 
