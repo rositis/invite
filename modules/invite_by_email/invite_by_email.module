@@ -255,27 +255,29 @@ function invite_by_email_invite_type_save($invite_type) {
  */
 function invite_by_email_entity_presave($invite, $type) {
   global $user;
-  if (!empty($invite->type_details()->invite_sending_controller['invite_by_email'])) {
-    $entity = entity_metadata_wrapper('invite', $invite);
-    $mail_address = $entity->field_invitation_email_address->value();
-    if ($account = user_load_by_mail($mail_address)) {
-      $invite->invitee = $account->uid;
-    }
-    $token_data = array(
-      'invite' => $invite,
-      'user' => $user,
-      'profile' => user_load($user->uid),
-    );
-    $invite->data = array(
-      'subject' => $entity->field_invitation_email_subject->value(),
-      'message' => $entity->field_invitation_email_body->value(),
-    );
-
-    $entity->field_invitation_email_subject = token_replace(trim($entity->field_invitation_email_subject->value()), $token_data);
-    $entity->field_invitation_email_body = token_replace($entity->field_invitation_email_body->value(), $token_data);
-
-    $invite->data = serialize($invite->data);
+  if ($type != 'invite' || empty($invite->type_details()->invite_sending_controller['invite_by_email'])) {
+    return FALSE;
   }
+
+  $entity = entity_metadata_wrapper('invite', $invite);
+  $mail_address = $entity->field_invitation_email_address->value();
+  if ($account = user_load_by_mail($mail_address)) {
+    $invite->invitee = $account->uid;
+  }
+  $token_data = array(
+    'invite' => $invite,
+    'user' => $user,
+    'profile' => user_load($user->uid),
+  );
+  $invite->data = array(
+    'subject' => $entity->field_invitation_email_subject->value(),
+    'message' => $entity->field_invitation_email_body->value(),
+  );
+
+  $entity->field_invitation_email_subject = token_replace(trim($entity->field_invitation_email_subject->value()), $token_data);
+  $entity->field_invitation_email_body = token_replace($entity->field_invitation_email_body->value(), $token_data);
+
+  $invite->data = serialize($invite->data);
 }
 
 /**
