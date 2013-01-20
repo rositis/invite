@@ -235,7 +235,8 @@ function invite_access($op, $invite, $account = NULL, $entity_type = NULL) {
   switch ($op) {
     case 'create':
       return user_access('administer invite entities', $account)
-        || user_access('create invite entities', $account);
+        || user_access('create any invite entities', $account)
+        || user_access('create ' . $invite->type . ' entity');
     case 'view':
       return user_access('administer invite entities', $account)
         || user_access('view invite entities', $account);
@@ -302,11 +303,12 @@ function invite_permission() {
       'restrict access' => TRUE,
     ),
 
-    'create invite entities' => array(
-      'title' => t('Create invites'),
-      'description' => t('Allows users to create invites.'),
+    'create any invite entities' => array(
+      'title' => t('Create any invites'),
+      'description' => t('Allows users to create invites of any type.'),
       'restrict access' => FALSE,
     ),
+
     'view invite entities' => array(
       'title' => t('View invites'),
       'description' => t('Allows users to view invites.'),
@@ -342,6 +344,15 @@ function invite_permission() {
       'restrict access' => FALSE,
     ),
   );
+
+  foreach (invite_get_types() as $invite_type) {
+    $permissions['create ' . $invite_type->type . ' entity'] = array(
+      'title' => t('%name create new invites.', array('%name' => $invite_type->label)),
+      'description' => '',
+      'restrict access' => FALSE,
+    );
+  }
+
   return $permissions;
 }
 
