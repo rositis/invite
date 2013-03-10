@@ -80,6 +80,41 @@ function invite_entity_info_alter(&$entity_info) {
 }
 
 /**
+ * Implements hook_block_info().
+ *
+ * @return array
+ */
+function invite_block_info() {
+  $blocks = array();
+  foreach (invite_get_types() as $type => $info) {
+    $blocks['invite_add_' . $type] = array(
+      'info' => t('Create invite @type.', array('@type' => $info->label)),
+    );
+  }
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ *
+ * @param $delta
+ * @return mixed
+ */
+function invite_block_view($delta) {
+  module_load_include('inc', 'invite', 'includes/invite.admin');
+
+  $type = str_replace('invite_add_', '', $delta);
+  $invite_type = invite_get_types($type);
+
+  $invite = entity_create('invite', array('type' => $type));
+  $block['subject'] = t('Create @name', array('@name' => entity_label('invite_type', $invite_type)));
+
+  $block['content'] = drupal_get_form('invite_form', $invite);
+
+  return $block;
+}
+
+/**
  * Implements hook_menu().
  */
 function invite_menu() {

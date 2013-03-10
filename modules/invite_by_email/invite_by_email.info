@@ -3,9 +3,11 @@ description = Allow users invite other using e-mail
 core = 7.x
 package = Invite
 
-files[] = invite_by_mail.module
-files[] = invite_by_mail.admin.inc
+files[] = invite_by_email.module
+files[] = invite_by_email.admin.inc
 
 configure = admin/config/people/invite/by_mail
 
 dependencies[] = invite
+
+stylesheets[screen][] = css/invite_by_email.css
