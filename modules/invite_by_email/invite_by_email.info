@@ -9,5 +9,6 @@ files[] = invite_by_email.admin.inc
 configure = admin/config/people/invite/by_mail
 
 dependencies[] = invite
+dependencies[] = entity_token
 
 stylesheets[screen][] = css/invite_by_email.css
