@@ -225,7 +225,9 @@ class InviteType extends Entity {
     foreach ($controllers as $controller) {
       $this->invite_sending_controller[$controller->name] = $controller->name;
     }
-    $this->data = unserialize($this->data);
+    if (is_string($this->data)) {
+      $this->data = unserialize($this->data);
+    }
   }
 
   function hasSendingController($controller_name) {
