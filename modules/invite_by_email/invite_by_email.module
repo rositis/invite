@@ -158,9 +158,9 @@ function invite_by_email_invite_type_save($invite_type) {
       'instance' => array(
         'field_name' => 'field_invitation_email_address',
         'entity_type' => 'invite',
-        'label' => 'E-mail',
+        'label' => t('E-mail'),
         'bundle' => 'invite_by_email',
-        'description' => 'Type e-mail address of person you wish invite.',
+        'description' => t('Type e-mail address of person you wish invite.'),
         'widget' => array(
           'type' => 'text_textfield',
           'weight' => 10,
@@ -182,9 +182,9 @@ function invite_by_email_invite_type_save($invite_type) {
       'instance' => array(
         'field_name' => 'field_invitation_email_subject',
         'entity_type' => 'invite',
-        'label' => 'Subject',
+        'label' => t('Subject'),
         'bundle' => 'invite_by_email',
-        'description' => 'Enter e-mail subject.',
+        'description' => t('Enter e-mail subject.'),
         'default_value' => array(
           array(
             'value' => variable_get('invite_default_mail_subject', ''),
@@ -210,9 +210,9 @@ function invite_by_email_invite_type_save($invite_type) {
       'instance' => array(
         'field_name' => 'field_invitation_email_body',
         'entity_type' => 'invite',
-        'label' => 'Body',
+        'label' => t('Body'),
         'bundle' => 'invite_by_email',
-        'description' => 'Enter e-mail body.',
+        'description' => t('Enter e-mail body.'),
         'default_value' => array(
           array(
             'value' => variable_get('invite_default_mail_body', ''),
