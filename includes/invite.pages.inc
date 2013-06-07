@@ -31,12 +31,14 @@ function invite_accept($invite) {
     $_SESSION[INVITE_SESSION_CODE] = $invite->reg_code;
     $redirect = variable_get('invite_registration_path', 'user/register');
   }
-  elseif (!empty($user->uid) && ($user->uid == $invite->invitee) && ($invite->status() == INVITE_VALID)) {
-    $_SESSION[INVITE_SESSION_CODE] = $invite->reg_code;
-    $account = user_load($user->uid);
+  elseif (!empty($user->uid) && ($invite->status() == INVITE_VALID)) {
+    $invite->invitee = $user->uid;
+    $invite->joined = REQUEST_TIME;
+    entity_save('invite', $invite);
+
+    unset($_SESSION[INVITE_SESSION_CODE]);
     $inviter = $invite->inviter();
-    module_invoke_all('invite_accept', $invite, $account);
-    $message = t('You have accepted invitation from !user', array('!user' => theme('username', array('account' => $inviter))));
+    $message = t('You have accepted the invitation from !user', array('!user' => theme('username', array('account' => $inviter))));
     $redirect = 'user';
   }
   elseif (empty($user->uid) && !empty($invite->invitee) && ($invite->status() == INVITE_VALID)) {

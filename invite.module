@@ -640,8 +640,10 @@ function invite_form_user_login_block_alter(&$form, &$form_state, $form_id) {
  */
 function invite_form_user_login_alter(&$form, &$form_state, $form_id) {
   $invite = invite_load_from_session();
-  if ($invite && !empty($invite->invitee)) {
-    $form['#invite'] = $invite;
+  global $user;
+
+  if ($invite && $invite->status() == INVITE_VALID && (!$invite->invitee || $invite->invitee == $user->uid)) {
+    $form_state['invite'] = $invite;
     $form['#submit'][] = 'invite_form_user_login_submit';
   }
 }
@@ -653,17 +655,11 @@ function invite_form_user_login_alter(&$form, &$form_state, $form_id) {
  * @param $form_state
  */
 function invite_form_user_login_submit($form, &$form_state) {
-  global $user;
-  if (!empty($form['#invite'])) {
-    $invite = $form['#invite'];
-    $account = user_load($user->uid);
+  if (!empty($form_state['invite'])) {
+    $invite = $form_state['invite'];
+    $invite->invitee = $GLOBALS['user']->uid;
     $invite->joined = REQUEST_TIME;
     entity_save('invite', $invite);
-
-    module_invoke_all('invite_accept', $invite, $account);
-    if (module_exists('rules')) {
-      rules_invoke_event('invite_accepted', $invite, $account);
-    }
 
     if (isset($_SESSION)) {
       unset($_SESSION[INVITE_SESSION_CODE]);
@@ -680,19 +676,29 @@ function invite_form_user_login_submit($form, &$form_state) {
  */
 function invite_user_insert(&$edit, $account, $category) {
   $invite = invite_load_from_session();
-  if ($invite && empty($invite->invitee)) {
+  if ($invite && empty($invite->invitee) && $invite->status() == INVITE_VALID) {
     $invite->invitee = $account->uid;
     $invite->joined = REQUEST_TIME;
     entity_save('invite', $invite);
 
+    if (isset($_SESSION)) {
+      unset($_SESSION[INVITE_SESSION_CODE]);
+    }
+  }
+}
+
+/**
+ * Implements hook_invite_update().
+ */
+function invite_invite_update($invite) {
+  // When invite has been accepted, trigger accept hook.
+  if (isset($invite->original) && !$invite->original->joined && $invite->joined) {
+    $account = $invite->invitee();
     module_invoke_all('invite_accept', $invite, $account);
     if (module_exists('rules')) {
       rules_invoke_event('invite_accept', $invite, $account);
     }
-
-    if (isset($_SESSION)) {
-      unset($_SESSION[INVITE_SESSION_CODE]);
-    }
+    drupal_set_message(t('You have accepted the invitation from !user.', array('!user' => theme('username', array('account' => $invite->inviter())))));
   }
 }
 
@@ -751,5 +757,3 @@ function invite_target_roles($invite, $account) {
 
   return $targets;
 }
-
-
