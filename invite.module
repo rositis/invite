@@ -175,8 +175,8 @@ function invite_menu() {
       'title' => 'Add invite',
       'page callback' => 'invite_add',
       'page arguments' => array(2),
-      'access callback' => 'entity_access',
-      'access arguments' => array('create', 'invite', $type),
+      'access callback' => 'invite_access',
+      'access arguments' => array('create', $type),
       'file' => 'includes/invite.admin.inc',
     );
   }
@@ -256,34 +256,36 @@ function invite_menu() {
 /**
  * Access callback for invite type.
  *
- * @param $op
  * @param $invite
- * @param null $account
- * @param null $entity_type
+ *   Either an invite entity or in case $op is 'create' either an entity or
+ *   an invite type name.
+ *
  * @return bool
+ *
+ * @see entity_access()
  */
-function invite_access($op, $invite, $account = NULL, $entity_type = NULL) {
+function invite_access($op, $invite = NULL, $account = NULL, $entity_type = NULL) {
   global $user;
   if (!isset($account)) {
     $account = $user;
   }
   switch ($op) {
     case 'create':
+      $type = isset($invite) && is_object($invite) ? $invite->type : $invite;
       return user_access('administer invite entities', $account)
-        || user_access('create any invite entities', $account)
-        || user_access('create ' . $invite->type . ' entity');
+      || user_access('create any invite entities', $account)
+      || user_access('create ' . $type . ' entity');
     case 'view':
       return user_access('administer invite entities', $account)
-        || user_access('view invite entities', $account);
+      || user_access('view invite entities', $account);
     case 'edit':
       return user_access('administer invite entities')
-        || user_access('edit any invite entities')
-        || (user_access('edit own invite entities') && ($invite->uid == $account->uid));
+      || user_access('edit any invite entities')
+      || isset($invite) && (user_access('edit own invite entities') && ($invite->uid == $account->uid));
     case 'withdraw':
       return user_access('withdraw invitations')
-        || (user_access('edit own invite entities') && ($invite->invitee == $account->uid));
+      || isset($invite) && (user_access('edit own invite entities') && ($invite->invitee == $account->uid));
   }
-
   return TRUE;
 }
 
