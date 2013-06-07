@@ -254,10 +254,6 @@ function invite_form_submit($form, &$form_state) {
   if (invite_save($invite)) {
     $invite_uri = entity_uri('invite', $invite);
     $form_state['redirect'] = $invite_uri['path'];
-    drupal_set_message(t('Invite %title added.', array('%title' => entity_label('invite', $invite))));
-  }
-  else {
-    drupal_set_message(t('Saving invite %title failed.', array('%title' => entity_label('invite', $invite))), 'error');
   }
 }
 
