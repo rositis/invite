@@ -659,6 +659,9 @@ function invite_form_user_login_submit($form, &$form_state) {
     entity_save('invite', $invite);
 
     module_invoke_all('invite_accept', $invite, $account);
+    if (module_exists('rules')) {
+      rules_invoke_event('invite_accepted', $invite, $account);
+    }
 
     if (isset($_SESSION)) {
       unset($_SESSION[INVITE_SESSION_CODE]);
@@ -681,6 +684,9 @@ function invite_user_insert(&$edit, $account, $category) {
     entity_save('invite', $invite);
 
     module_invoke_all('invite_accept', $invite, $account);
+    if (module_exists('rules')) {
+      rules_invoke_event('invite_accept', $invite, $account);
+    }
 
     if (isset($_SESSION)) {
       unset($_SESSION[INVITE_SESSION_CODE]);

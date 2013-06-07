@@ -144,7 +144,9 @@ function invite_withdraw_form_submit($form, &$form_state) {
 
   // Notify other modules.
   module_invoke_all('invite_withdraw', $invite);
-
+  if (module_exists('rules')) {
+    rules_invoke_event('invite_withdraw', $invite);
+  }
   drupal_goto('<front>');
 }
 
