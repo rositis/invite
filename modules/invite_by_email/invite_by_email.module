@@ -92,37 +92,6 @@ HELP
     ),
   );
 
-
-  /**
-   * These settings commented, but not removed, not sure about best way to store them and too lazy to type them again.
-   * @todo: remove before alpha release if field-based settings will be enough.
-   */
-  /*
-  $form['invite_by_email']['mail_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Subject'),
-    '#default_value' => $invite_by_email_settings['mail_subject'],
-    '#description' => t('Type the default subject of the invitation e-mail.') . ' ' . t('Use the syntax [token] if you want to insert a replacement pattern.'),
-    '#states' => array(
-      'invisible' => array(
-        ':input[name="invite_by_email[use_default]"]' => array('checked' => TRUE),
-      ),
-    ),
-  );
-
-  $form['invite_by_email']['mail_template'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Mail template'),
-    '#default_value' => $invite_by_email_settings['mail_template'],
-    '#description' => t('Use the syntax [token] if you want to insert a replacement pattern.'),
-    '#states' => array(
-      'invisible' => array(
-        ':input[name="invite_by_email[use_default]"]' => array('checked' => TRUE),
-      ),
-    ),
-  );
-  */
-
   // Put our submit in top of list to ensure, that values will be added to 'data'
   array_unshift($form['#submit'], 'invite_by_email_form_invite_type_form_submit');
 }
