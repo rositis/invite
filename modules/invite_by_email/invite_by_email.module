@@ -405,24 +405,22 @@ function invite_by_email_form_invite_form_alter(&$form, &$form_state, $form_id) 
   $invite = $form['#entity'];
   if (!empty($invite->type_details()->invite_sending_controller['invite_by_email'])) {
     $language_subject = $form['field_invitation_email_subject']['#language'];
-    $invite_by_email_settings = $invite->type_details()->data['invite_by_email'];
+    $invite_by_email_settings = isset($invite->type_details()->data['invite_by_email']) ? $invite->type_details()->data['invite_by_email'] : array();
     // Force fill with defaults if needed.
-    if ($invite_by_email_settings['use_default']) {
+    if (empty($invite_by_email_settings) || $invite_by_email_settings['use_default']) {
       $message_editable = variable_get('invite_message_editable', FALSE);
       $form['field_invitation_email_subject'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_subject', '');
       $form['field_invitation_email_body'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_body', '');
     }
     else {
       $message_editable = $invite_by_email_settings['message_editable'];
-//      $form['field_invitation_email_subject'][$language_subject][0]['value']['#default_value'] = $invite_by_email_settings['mail_subject'];
-//      $form['field_invitation_email_body'][$language_subject][0]['value']['#default_value'] = $invite_by_email_settings['mail_template'];
     }
     // Hide if message is not editable.
     if (!$message_editable) {
       $form['field_invitation_email_subject']['#type'] = 'hidden';
       $form['field_invitation_email_body']['#type'] = 'hidden';
     }
-    else {
+    elseif (module_exists('token')) {
       // Add tokens help
       $form['token_help'] = array(
         '#title' => t('Replacement patterns'),
