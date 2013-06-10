@@ -29,6 +29,13 @@ function invite_by_email_settings_form() {
     '#description' => t('Use the syntax [token] if you want to insert a replacement pattern.'),
   );
 
+  $form['invite_default_replace_tokens'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Apply token replacements'),
+    '#default_value' => variable_get('invite_default_replace_tokens', TRUE),
+    '#description' => t('Whether token replacement patterns should be applied.'),
+  );
+
   if (module_exists('token')) {
     $form['token_help'] = array(
       '#title' => t('Replacement patterns'),

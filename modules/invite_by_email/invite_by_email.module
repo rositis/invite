@@ -80,6 +80,18 @@ function invite_by_email_form_invite_type_form_alter(&$form, &$form_state, $invi
     ),
   );
 
+  $form['invite_by_email']['replace_tokens'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Apply token replacements'),
+    '#default_value' => isset($invite_by_email_settings['replace_tokens']) ? $invite_by_email_settings['replace_tokens'] : TRUE,
+    '#description' => t('Whether token replacement patterns should be applied.'),
+    '#states' => array(
+      'invisible' => array(
+        ':input[name="invite_by_email[use_default]"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+
   $form['invite_by_email']['help'] = array(
     '#markup' => <<<HELP
 You may update default values for Subject and Body for this certain content type on fields edit page.
@@ -229,16 +241,20 @@ function invite_by_email_invite_presave($invite) {
   if ($account = user_load_by_mail($mail_address)) {
     $invite->invitee = $account->uid;
   }
-  $token_data = array(
-    'invite' => $invite,
-    'user' => $user,
-    'profile' => user_load($user->uid),
-  );
   $invite->data['subject'] = $entity->field_invitation_email_subject->value();
   $invite->data['message'] = $entity->field_invitation_email_body->value();
 
-  $entity->field_invitation_email_subject = token_replace(trim($entity->field_invitation_email_subject->value()), $token_data);
-  $entity->field_invitation_email_body = token_replace($entity->field_invitation_email_body->value(), $token_data);
+  $invite_by_email_settings = $invite->type_details()->data['invite_by_email'];
+
+  if (($invite_by_email_settings['use_default'] && variable_get('invite_default_replace_tokens', TRUE)) || (!$invite_by_email_settings['use_default'] && !empty($invite_by_email_settings['replace_tokens']))) {
+    $token_data = array(
+      'invite' => $invite,
+      'user' => $user,
+      'profile' => user_load($user->uid),
+    );
+    $entity->field_invitation_email_subject = token_replace(trim($entity->field_invitation_email_subject->value()), $token_data);
+    $entity->field_invitation_email_body = token_replace($entity->field_invitation_email_body->value(), $token_data);
+  }
 }
 
 /**
@@ -349,14 +365,8 @@ function invite_by_email_mail($key, &$message, $params) {
   }
 
   $entity = entity_metadata_wrapper('invite', $invite);
-  $token_data = array(
-    'invite' => $invite,
-    'user' => $user,
-    'profile' => user_load($user->uid),
-  );
-
-  $message['subject'] = token_replace(trim($entity->field_invitation_email_subject->value()), $token_data);
-  $message['body'][] = token_replace($entity->field_invitation_email_body->value(), $token_data);
+  $message['subject'] = str_replace(array("\r", "\n"), '', trim($entity->field_invitation_email_subject->value()));
+  $message['body'][] = $entity->field_invitation_email_body->value();
 }
 
 /**
@@ -366,34 +376,41 @@ function invite_by_email_form_invite_form_alter(&$form, &$form_state, $form_id) 
   $invite = $form['#entity'];
   if (!empty($invite->type_details()->invite_sending_controller['invite_by_email'])) {
     $language_subject = $form['field_invitation_email_subject']['#language'];
-    $invite_by_email_settings = isset($invite->type_details()->data['invite_by_email']) ? $invite->type_details()->data['invite_by_email'] : array();
-    // Force fill with defaults if needed.
-    if (empty($invite_by_email_settings) || $invite_by_email_settings['use_default']) {
+    $invite_by_email_settings = isset($invite->type_details()->data['invite_by_email']) ? $invite->type_details()->data['invite_by_email'] : array('use_default' => TRUE);
+
+    if ($invite_by_email_settings['use_default']) {
       $message_editable = variable_get('invite_message_editable', FALSE);
-      $form['field_invitation_email_subject'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_subject', '');
-      $form['field_invitation_email_body'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_body', '');
+      $replace_tokens = variable_get('invite_default_replace_tokens', TRUE);
     }
     else {
       $message_editable = $invite_by_email_settings['message_editable'];
+      $replace_tokens = isset($invite_by_email_settings['replace_tokens']) ? $invite_by_email_settings['replace_tokens'] : TRUE;
     }
     // Hide if message is not editable.
     if (!$message_editable) {
       $form['field_invitation_email_subject']['#type'] = 'hidden';
       $form['field_invitation_email_body']['#type'] = 'hidden';
     }
-    elseif (module_exists('token')) {
-      // Add tokens help
-      $form['token_help'] = array(
-        '#title' => t('Replacement patterns'),
-        '#type' => 'fieldset',
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-        '#weight' => $form['field_invitation_email_body']['#weight'] + 0.5,
-      );
+    else {
+      // Fill defaults as needed.
+      $form['field_invitation_email_subject'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_subject', '');
+      $form['field_invitation_email_body'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_body', '');
 
-      $form['token_help']['help'] = array(
-        '#markup' => theme('token_tree', array('token_types' => array('user', 'profile', 'invite'))),
-      );
+      // Add token help if enabled.
+      if (module_exists('token') && $replace_tokens) {
+        // Add tokens help
+        $form['token_help'] = array(
+          '#title' => t('Replacement patterns'),
+          '#type' => 'fieldset',
+          '#collapsible' => TRUE,
+          '#collapsed' => TRUE,
+          '#weight' => $form['field_invitation_email_body']['#weight'] + 0.5,
+        );
+
+        $form['token_help']['help'] = array(
+          '#markup' => theme('token_tree', array('token_types' => array('user', 'profile', 'invite'))),
+        );
+      }
     }
 
     $form['#validate'][] = 'invite_by_email_form_invite_form_validate';
