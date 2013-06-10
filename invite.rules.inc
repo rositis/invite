@@ -17,7 +17,7 @@ function invite_rules_event_info() {
         'invite' => array('type' => 'invite', 'label' => t('Invitation')),
       ),
     ),
-    'invite_accepted' => array(
+    'invite_accept' => array(
       'label' => t('An invitation has been accepted'),
       'group' => t('Invite'),
       'variables' => array(
