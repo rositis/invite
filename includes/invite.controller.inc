@@ -18,7 +18,7 @@ class InviteController extends EntityAPIController {
       'uid' => $user->uid,
       'invitee' => 0,
       'reg_code' => invite_generate_code(),
-      'data' => serialize(array()),
+      'data' => array(),
     );
     return parent::create($values);
   }
@@ -225,9 +225,6 @@ class InviteType extends Entity {
     foreach ($controllers as $controller) {
       $this->invite_sending_controller[$controller->name] = $controller->name;
     }
-    if (is_string($this->data)) {
-      $this->data = unserialize($this->data);
-    }
   }
 
   function hasSendingController($controller_name) {
@@ -243,7 +240,6 @@ class InviteType extends Entity {
   }
 
   public function save() {
-    $this->data = serialize($this->data);
     parent::save();
     $controllers = array();
     // Remove old controller entries.
