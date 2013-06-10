@@ -30,7 +30,7 @@ class InviteMetadataController extends EntityDefaultMetadataController {
       'required' => TRUE,
     );
 
-    $properties['invitee_user'] = array(
+    $properties['invitee'] = array(
       'label' => t("Invitee"),
       'type' => 'user',
       'description' => t("The user registered with invitation."),
@@ -41,10 +41,20 @@ class InviteMetadataController extends EntityDefaultMetadataController {
     );
 
     $properties['created'] = array(
+      'label' => t('Date created'),
       'type' => 'date',
+      'description' => t('The date the invite was created.'),
       'setter callback' => 'entity_property_verbatim_set',
-      'description' => t('The time the invite has been created.'),
-    ) + $properties['created'];
+      'setter permission' => 'administer invite entities',
+      'schema field' => 'created',
+    );
+
+    $properties['changed'] = array(
+      'label' => t('Date changed'),
+      'type' => 'date',
+      'schema field' => 'changed',
+      'description' => t('The date the node was most recently updated.'),
+    );
 
     $properties['expiry'] = array(
       'type' => 'date',

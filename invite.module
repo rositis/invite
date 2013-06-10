@@ -394,38 +394,6 @@ function invite_permission() {
 }
 
 /**
- * Implements hook_entity_property_info_alter().
- *
- * @param $info
- */
-function invite_entity_property_info_alter(&$info) {
-  $properties = &$info['invite']['properties'];
-  $properties['created'] = array(
-    'label' => t('Date created'),
-    'type' => 'date',
-    'description' => t('The date the invite was created.'),
-    'setter callback' => 'entity_property_verbatim_set',
-    'setter permission' => 'administer invite entities',
-    'schema field' => 'created',
-  );
-  $properties['changed'] = array(
-    'label' => t('Date changed'),
-    'type' => 'date',
-    'schema field' => 'changed',
-    'description' => t('The date the node was most recently updated.'),
-  );
-  $properties['uid'] = array(
-    'label' => t('Author'),
-    'type' => 'user',
-    'description' => t('The author of the invite.'),
-    'setter callback' => 'entity_property_verbatim_set',
-    'setter permission' => 'administer invite entities',
-    'required' => TRUE,
-    'schema field' => 'uid',
-  );
-}
-
-/**
  * Loads Invite by registration code.
  *
  * @param string $reg_code
