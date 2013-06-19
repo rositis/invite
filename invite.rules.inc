@@ -27,3 +27,25 @@ function invite_rules_event_info() {
     ),
   );
 }
+
+/**
+ * Implements hook_rules_action_info().
+ */
+function invite_rules_action_info() {
+  $items['invite_send'] = array(
+    'base' => 'invite_rules_action_send',
+    'label' => t('Re-send invitation'),
+    'parameter' => array(
+      'invite' => array('type' => 'invite', 'label' => t('Invitation')),
+    ),
+    'group' => t('Invite'),
+  );
+  return $items;
+}
+
+/**
+ * Rules action: Send invitation.
+ */
+function invite_rules_action_send($invite) {
+  $invite->sendInvite();
+}
