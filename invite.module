@@ -721,7 +721,7 @@ function invite_target_roles($invite, $account) {
     }
   }
 
-  module_invoke_all('invite_target_roles', $targets, $invite, $account);
+  drupal_alter('invite_target_roles', $targets, $invite, $account);
 
   return $targets;
 }
