@@ -186,16 +186,6 @@ function invite_menu() {
     );
   }
 
-  $items['admin/structure/invite-types/%invite_type/delete'] = array(
-    'title' => 'Delete',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('invite_type_form_delete_confirm', 4),
-    'access arguments' => array('administer invite types'),
-    'weight' => 1,
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'includes/invite.admin.inc',
-  );
-
   // Admin menu items
   $items['admin/config/people/invite'] = array(
     'title' => 'Invite',

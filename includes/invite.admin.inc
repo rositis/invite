@@ -115,43 +115,6 @@ function invite_type_form_submit_delete(&$form, &$form_state) {
 }
 
 /**
- * Invite type delete form.
- *
- * @param $form
- * @param $form_state
- * @param InviteType $invite_type
- * @return array
- */
-function invite_type_form_delete_confirm($form, &$form_state, $invite_type) {
-  $form_state['invite_type'] = $invite_type;
-  // Always provide entity id in the same form key as in the entity edit form.
-  $form['invite_type_id'] = array('#type' => 'value', '#value' => entity_id('invite_type' ,$invite_type));
-  return confirm_form($form,
-    t('Are you sure you want to delete invite type %title?', array('%title' => entity_label('invite_type', $invite_type))),
-    'task/' . entity_id('invite_type' ,$invite_type),
-    t('This action cannot be undone.'),
-    t('Delete'),
-    t('Cancel')
-  );
-}
-
-/**
- * Invite type delete form submit handler.
- *
- * @param $form
- * @param $form_state
- */
-function invite_type_form_delete_confirm_submit($form, &$form_state) {
-  $invite_type = $form_state['invite_type'];
-  invite_type_delete($invite_type);
-
-  watchdog('invite_type', '@type: deleted %title.', array('@type' => $invite_type->type, '%title' => $invite_type->label));
-  drupal_set_message(t('@type %title has been deleted.', array('@type' => $invite_type->type, '%title' => $invite_type->label)));
-
-  $form_state['redirect'] = 'admin/structure/invite-types';
-}
-
-/**
  * Page to select invite Type to add new invite.
  *
  * @return array
