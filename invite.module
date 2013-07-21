@@ -101,9 +101,14 @@ function invite_block_info() {
  * @return mixed
  */
 function invite_block_view($delta) {
+  $type = str_replace('invite_add_', '', $delta);
+  // Return empty block for users who have no appropriate permissions.
+  if (!(user_access('create any invite entities') || user_access('create ' . $type . ' entity'))) {
+    return NULL;
+  }
+
   module_load_include('inc', 'invite', 'includes/invite.admin');
 
-  $type = str_replace('invite_add_', '', $delta);
   $invite_type = invite_get_types($type);
 
   $invite = entity_create('invite', array('type' => $type));
