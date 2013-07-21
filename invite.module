@@ -349,7 +349,7 @@ function invite_permission() {
 
     'view own invite entities' => array(
       'title' => t('View own invites'),
-      'description' => t('Allows users to view invites.'),
+      'description' => t('Allows users to view the invites they have sent.'),
       'restrict access' => TRUE,
     ),
 
