@@ -562,7 +562,6 @@ function invite_get_types($type_name = NULL) {
  */
 function invite_type_save($invite_type) {
   entity_save('invite_type', $invite_type);
-  module_invoke_all('invite_type_save', $invite_type);
 }
 
 /**
