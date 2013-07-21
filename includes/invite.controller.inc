@@ -31,11 +31,11 @@ class InviteController extends EntityAPIController {
    * @return mixed
    */
   public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
-    $wrapper = entity_metadata_wrapper('invite', $entity);
+    $account = user_load($entity->uid);
     $content['author'] = array(
       '#prefix' => '<div>',
       '#suffix' => '</div>',
-      '#markup' => t('Created by: <strong>!author</strong>', array('!author' => $wrapper->uid->name->value(array('sanitize' => TRUE))))
+      '#markup' => t('Created by: <strong>!author</strong>', array('!author' => theme('username', array('account' => $account))))
     );
     $content['status'] = array(
       '#prefix' => '<div>',
