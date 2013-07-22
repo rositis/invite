@@ -120,6 +120,23 @@ function invite_by_email_form_invite_type_form_submit(&$form, &$form_state) {
 }
 
 /**
+ * Implements hook_TYPE_presave().
+ *
+ * @param InviteType $invite_type
+ */
+function invite_by_email_invite_type_presave($invite_type) {
+  // Adding default settings to invite type if it wasn't created via entity
+  // creation form (or data wasn't set).
+  if ($invite_type->is_new && $invite_type->hasSendingController('invite_by_email') && empty($invite_type->data['invite_by_email'])) {
+    $invite_type->data['invite_by_email'] = array(
+      'use_default' => TRUE,
+      'message_editable' => FALSE,
+      'replace_tokens' => FALSE,
+    );
+  }
+}
+
+/**
  * Implements hook_TYPE_insert().
  *
  * @param InviteType $invite_type
