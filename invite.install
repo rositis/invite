@@ -16,7 +16,7 @@ function invite_schema() {
         'not null' => TRUE,
       ),
       'reg_code' => array(
-        'description' => 'Stores the issued registration code and acts as primary identifier for a invite.',
+        'description' => 'Stores the issued registration code.',
         'type' => 'varchar',
         'length' => 10,
         'not null' => TRUE,
