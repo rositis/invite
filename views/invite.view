@@ -15,19 +15,20 @@ $handler = $view->new_display('default', 'Master', 'default');
 $handler->display->display_options['title'] = 'Invite';
 $handler->display->display_options['use_more_always'] = FALSE;
 $handler->display->display_options['access']['type'] = 'perm';
-$handler->display->display_options['access']['perm'] = 'view invite entities';
+$handler->display->display_options['access']['perm'] = 'view any invite entities';
 $handler->display->display_options['cache']['type'] = 'none';
 $handler->display->display_options['query']['type'] = 'views_query';
 $handler->display->display_options['exposed_form']['type'] = 'basic';
 $handler->display->display_options['pager']['type'] = 'full';
 $handler->display->display_options['pager']['options']['items_per_page'] = '10';
 $handler->display->display_options['style_plugin'] = 'table';
-/* Relationship: Invite: Inviter uid */
-$handler->display->display_options['relationships']['inviter']['id'] = 'inviter';
-$handler->display->display_options['relationships']['inviter']['table'] = 'invite';
-$handler->display->display_options['relationships']['inviter']['field'] = 'inviter';
-$handler->display->display_options['relationships']['inviter']['label'] = 'Benutzer';
-/* Field: Invite: Date created */
+/* Relationship: Invitee */
+$handler->display->display_options['relationships']['invitee_user']['id'] = 'invitee_user';
+$handler->display->display_options['relationships']['invitee_user']['table'] = 'invite';
+$handler->display->display_options['relationships']['invitee_user']['field'] = 'invitee_user';
+$handler->display->display_options['relationships']['invitee_user']['ui_name'] = 'Invitee';
+$handler->display->display_options['relationships']['invitee_user']['label'] = 'Invitee';
+/* Field: Invite: Created */
 $handler->display->display_options['fields']['created']['id'] = 'created';
 $handler->display->display_options['fields']['created']['table'] = 'invite';
 $handler->display->display_options['fields']['created']['field'] = 'created';
@@ -43,6 +44,11 @@ $handler->display->display_options['fields']['joined']['id'] = 'joined';
 $handler->display->display_options['fields']['joined']['table'] = 'invite';
 $handler->display->display_options['fields']['joined']['field'] = 'joined';
 $handler->display->display_options['fields']['joined']['date_format'] = 'long';
+/* Field: User: Name */
+$handler->display->display_options['fields']['name']['id'] = 'name';
+$handler->display->display_options['fields']['name']['table'] = 'users';
+$handler->display->display_options['fields']['name']['field'] = 'name';
+$handler->display->display_options['fields']['name']['relationship'] = 'invitee_user';
 /* Field: Invite: Status */
 $handler->display->display_options['fields']['status']['id'] = 'status';
 $handler->display->display_options['fields']['status']['table'] = 'views_entity_invite';
@@ -52,18 +58,11 @@ $handler->display->display_options['fields']['status']['link_to_entity'] = 0;
 $handler->display->display_options['arguments']['inviter']['id'] = 'inviter';
 $handler->display->display_options['arguments']['inviter']['table'] = 'invite';
 $handler->display->display_options['arguments']['inviter']['field'] = 'inviter';
-$handler->display->display_options['arguments']['inviter']['default_action'] = 'access denied';
-$handler->display->display_options['arguments']['inviter']['exception']['title'] = 'Alles';
+$handler->display->display_options['arguments']['inviter']['default_action'] = 'empty';
 $handler->display->display_options['arguments']['inviter']['default_argument_type'] = 'fixed';
 $handler->display->display_options['arguments']['inviter']['summary']['number_of_records'] = '0';
 $handler->display->display_options['arguments']['inviter']['summary']['format'] = 'default_summary';
 $handler->display->display_options['arguments']['inviter']['summary_options']['items_per_page'] = '25';
-/* Filter criterion: User: The user ID */
-$handler->display->display_options['filters']['uid_raw']['id'] = 'uid_raw';
-$handler->display->display_options['filters']['uid_raw']['table'] = 'users';
-$handler->display->display_options['filters']['uid_raw']['field'] = 'uid_raw';
-$handler->display->display_options['filters']['uid_raw']['relationship'] = 'inviter';
-$handler->display->display_options['filters']['uid_raw']['value']['value'] = '***CURRENT_USER***';
 
 /* Display: Page */
 $handler = $view->new_display('page', 'Page', 'page');
