@@ -271,7 +271,6 @@ function invite_access($op, $invite = NULL, $account = NULL, $entity_type = NULL
       || user_access('create any invite entities', $account)
       || user_access('create ' . $type . ' entity');
     case 'view':
-      dpm(get_defined_vars());
       return user_access('administer invite entities', $account)
       || user_access('view any invite entities', $account)
       || ($invite->uid == $account->uid);
