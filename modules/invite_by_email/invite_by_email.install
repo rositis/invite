@@ -28,10 +28,13 @@ TEMPLATE
   );
 
   foreach ($types as $type) {
-    $invite_type = entity_create('invite_type', $type);
-    if ($invite_type) {
-      $invite_type->invite_sending_controller = $type['invite_sending_controller'];
-      invite_type_save($invite_type);
+    $invite_type = entity_get_info($type['type']);
+    if (empty($invite_type)) {
+      $invite_type = entity_create('invite_type', $type);
+      if ($invite_type) {
+        $invite_type->invite_sending_controller = $type['invite_sending_controller'];
+        invite_type_save($invite_type);
+      }
     }
   }
 }
