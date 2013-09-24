@@ -163,7 +163,7 @@ class Invite extends Entity {
 
   public function status($readable = FALSE) {
     if (!$this || $this->canceled != 0) {
-      return $readable ? 'withdrawn' : INVITE_WITHDRAWN;
+      return $readable ? t('withdrawn') : INVITE_WITHDRAWN;
     }
     elseif ($this->joined != 0) {
       return $readable ? t('used') : INVITE_USED;
