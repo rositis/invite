@@ -3,8 +3,6 @@ description = Process notifications for Invite module.
 core = 7.x
 package = Invite
 
-files[] = invite_notifications.module
-
 ;configure = admin/config/people/invite
 
 dependencies[] = invite
