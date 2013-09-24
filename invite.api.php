@@ -62,5 +62,36 @@ function hook_invite_target_roles_alter($targets, $invite, $account) {
 }
 
 /**
+ * Defines the module as being an invite sending controller.
+ *
+ * @return
+ *   An array of settings containing the keys:
+ *   - label: A human readable, translated label for the controller.
+ */
+function hook_invite_sending_controller() {
+  return array(
+    'label' => t('My module invitation controller'),
+  );
+}
+
+/**
+ * Sends the invitation.
+ *
+ * Called by the Invite::sendInvite() method.
+ *
+ * @param Invite $invite
+ *   The invitation to send.
+ */
+function hook_invite_send($invite) {
+  if (!empty($invite->type_details()->invite_sending_controller['my_module'])) {
+    global $language;
+    $entity = entity_metadata_wrapper('invite', $invite);
+    $params = array('invite' => $invite, 'wrapper' => $entity);
+    $from = $entity->inviter->mail->value();
+    drupal_mail('my_module', 'invite', $entity->invitee->mail->value(), $language, $params, $from, TRUE);
+  }
+}
+
+/**
  * @} End of "addtogroup hooks".
  */
