@@ -178,7 +178,7 @@ class Invite extends Entity {
 
   protected function defaultLabel() {
     $entity = entity_metadata_wrapper('invite', $this);
-    return $entity->field_invitation_email_address->value();
+    return t('Invitation #@number', array('@number' => $this->identifier()));
   }
 
   protected function defaultUri() {
