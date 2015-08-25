@@ -167,7 +167,7 @@ function invite_by_email_invite_type_update($invite_type) {
         'entity_type' => 'invite',
         'label' => t('E-mail'),
         'bundle' => 'invite_by_email',
-        'description' => t('Type e-mail address of person you wish invite.'),
+        'description' => t('Type the e-mail address of the person you wish to invite.'),
         'widget' => array(
           'type' => 'text_textfield',
           'weight' => 10,

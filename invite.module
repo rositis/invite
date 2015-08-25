@@ -478,7 +478,7 @@ function invite_delete_multiple($invite_ids) {
 function invite_invite_insert($entity) {
   if ($entity->sendInvite()) {
     if ($entity->sendNotification) {
-      drupal_set_message(t('Invitation was sent'));
+      drupal_set_message(t('Invitation has been sent.'));
     }
   }
   else {

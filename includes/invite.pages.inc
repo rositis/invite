@@ -43,7 +43,7 @@ function invite_accept($invite) {
   }
   elseif (empty($user->uid) && !empty($invite->invitee) && ($invite->status() == INVITE_VALID)) {
     $_SESSION[INVITE_SESSION_CODE] = $invite->reg_code;
-    $message = t('You should login first to accept invite.');
+    $message = t('You should login first to accept this invitation.');
     $redirect = 'user/login';
   }
   else {
@@ -92,7 +92,7 @@ function invite_resend($invite) {
   }
 
   return array(
-    'message' => t('Invite was sucessfuly resended.'),
+    'message' => t('Invitation has been sucessfully resent.'),
     'invite' => entity_view('invite', array(entity_id('invite', $invite) => $invite), 'full'),
   );
 }
@@ -113,7 +113,7 @@ function invite_withdraw_form($form, &$form_state, $invite) {
     '#type' => 'value',
     '#value' => $invite,
   );
-  $description = (!$invite->joined && $invite->expiry > REQUEST_TIME) ? t("The invitee won't be able to register any more using this invitation !invite<br/>", array('!invite' => drupal_render(entity_view('invite', array(entity_id('invite', $invite) => $invite), 'full')))) . ' ' : '';
+  $description = (!$invite->joined && $invite->expiry > REQUEST_TIME) ? t("The invitee no longer be able to register using this invitation !invite<br/>", array('!invite' => drupal_render(entity_view('invite', array(entity_id('invite', $invite) => $invite), 'full')))) . ' ' : '';
   $redirect = !empty($_REQUEST['destination']) ? $_REQUEST['destination'] : '<front>';
 
   return confirm_form(

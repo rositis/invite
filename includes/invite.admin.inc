@@ -246,7 +246,7 @@ function invite_delete_form($form, &$form_state, $invite) {
   $form['invite_type_id'] = array('#type' => 'value', '#value' => entity_id('invite' ,$invite));
   $invite_uri = entity_uri('invite', $invite);
   return confirm_form($form,
-    t('Are you sure you want to delete invite %title?', array('%title' => entity_label('invite', $invite))),
+    t('Are you sure you want to delete %title?', array('%title' => entity_label('invite', $invite))),
     $invite_uri['path'],
     t('This action cannot be undone.'),
     t('Delete'),
@@ -264,7 +264,7 @@ function invite_delete_form_submit($form, &$form_state) {
   $invite = $form_state['invite'];
   invite_delete($invite);
 
-  drupal_set_message(t('invite %title deleted.', array('%title' => entity_label('invite', $invite))));
+  drupal_set_message(t('%title deleted.', array('%title' => entity_label('invite', $invite))));
 
   $form_state['redirect'] = '<front>';
 }
