@@ -93,10 +93,10 @@ function invite_by_email_form_invite_type_form_alter(&$form, &$form_state, $invi
   );
 
   $form['invite_by_email']['help'] = array(
-    '#markup' => <<<HELP
-You may update default values for Subject and Body for this certain content type on fields edit page.
-HELP
-,
+    '#type' => 'container',
+    'help' => array(
+      '#markup' => t('You may update the default values for Subject and Body for this content type on the fields edit page.'),
+    ),
     '#states' => array(
       'invisible' => array(
         ':input[name="invite_by_email[use_default]"]' => array('checked' => TRUE),
@@ -407,6 +407,9 @@ function invite_by_email_form_invite_form_alter(&$form, &$form_state, $form_id) 
     if ($invite_by_email_settings['use_default']) {
       $message_editable = variable_get('invite_message_editable', FALSE);
       $replace_tokens = variable_get('invite_default_replace_tokens', TRUE);
+      // Override the default mail subject and body with the global defaults.
+      $form['field_invitation_email_subject'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_subject', '');
+      $form['field_invitation_email_body'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_body', '');
     }
     else {
       $message_editable = $invite_by_email_settings['message_editable'];
@@ -418,10 +421,6 @@ function invite_by_email_form_invite_form_alter(&$form, &$form_state, $form_id) 
       $form['field_invitation_email_body']['#type'] = 'hidden';
     }
     else {
-      // Fill defaults as needed.
-      $form['field_invitation_email_subject'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_subject', '');
-      $form['field_invitation_email_body'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_body', '');
-
       // Add token help if enabled.
       if (module_exists('token') && $replace_tokens) {
         // Add tokens help
