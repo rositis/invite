@@ -267,8 +267,11 @@ function invite_by_email_invite_presave($invite) {
   if ($account = user_load_by_mail($mail_address)) {
     $invite->invitee = $account->uid;
   }
+
   $invite->data['subject'] = $entity->field_invitation_email_subject->value();
-  $invite->data['message'] = $entity->field_invitation_email_body->value();
+  $email_body = $entity->field_invitation_email_body->value();
+  $email_body_text = isset($email_body['format']) ? $email_body['value'] : $email_body;
+  $invite->data['message'] = $email_body_text;
 
   $invite_by_email_settings = $invite->type_details()->data['invite_by_email'];
 
@@ -279,7 +282,12 @@ function invite_by_email_invite_presave($invite) {
       'profile' => user_load($user->uid),
     );
     $entity->field_invitation_email_subject = token_replace(trim($entity->field_invitation_email_subject->value()), $token_data);
-    $entity->field_invitation_email_body = token_replace($entity->field_invitation_email_body->value(), $token_data);
+    if (isset($email_body['format'])) {
+      $entity->field_invitation_email_body->value->set(token_replace($email_body_text, $token_data));
+    }
+    else {
+      $entity->field_invitation_email_body = token_replace($email_body_text, $token_data);
+    }
   }
 }
 
@@ -392,7 +400,8 @@ function invite_by_email_mail($key, &$message, $params) {
 
   $entity = entity_metadata_wrapper('invite', $invite);
   $message['subject'] = str_replace(array("\r", "\n"), '', trim($entity->field_invitation_email_subject->value()));
-  $message['body'][] = $entity->field_invitation_email_body->value();
+  $email_body = $entity->field_invitation_email_body->value();
+  $message['body'][] = isset($email_body['format']) ? $email_body['value'] : $email_body;
 }
 
 /**
