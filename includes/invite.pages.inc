@@ -38,7 +38,7 @@ function invite_accept($invite) {
 
     unset($_SESSION[INVITE_SESSION_CODE]);
     $inviter = $invite->inviter();
-    $message = t('You have accepted the invitation from !user', array('!user' => theme('username', array('account' => $inviter))));
+    $message = t('You have accepted the invitation from !user.', array('!user' => theme('username', array('account' => $inviter))));
     $redirect = 'user';
   }
   elseif (empty($user->uid) && !empty($invite->invitee) && ($invite->status() == INVITE_VALID)) {
