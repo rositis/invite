@@ -655,7 +655,6 @@ function invite_invite_update($invite) {
     if (module_exists('rules')) {
       rules_invoke_event('invite_accept', $invite, $account);
     }
-    drupal_set_message(t('You have accepted the invitation from !user.', array('!user' => theme('username', array('account' => $invite->inviter())))));
   }
 }
 
