@@ -369,7 +369,7 @@ function invite_by_email_send_invitation($invite) {
     $from = NULL;
   }
 
-  $params = array('invite' => $invite);
+  $params = array('invite' => $invite->iid);
 
   // Override Reply-To address.
   if (!variable_get('invite_use_users_email_replyto', 0)) {
@@ -395,7 +395,7 @@ function invite_by_email_send_invitation($invite) {
 function invite_by_email_mail($key, &$message, $params) {
   global $user;
 
-  $invite = $params['invite'];
+  $invite = invite_load($params['invite']);
 
   if (!empty($params['reply-to'])) {
     $message['headers']['Reply-To'] = $params['reply-to'];
