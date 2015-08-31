@@ -21,9 +21,11 @@ function invite_accept($invite) {
 
   $redirect = '<front>';
   $message = '';
+  $type = 'status';
 
   if ($user->uid == $invite->uid) {
     $message = t('You could not use own invite.');
+    $type = 'error';
     $redirect = '<front>';
   }
   elseif (!$user->uid && (empty($invite->invitee)) && $invite->status() == INVITE_VALID) {
@@ -44,9 +46,14 @@ function invite_accept($invite) {
   elseif (empty($user->uid) && !empty($invite->invitee) && ($invite->status() == INVITE_VALID)) {
     $_SESSION[INVITE_SESSION_CODE] = $invite->reg_code;
     $message = t('You should login first to accept this invitation.');
+    $type = 'warning';
     $redirect = 'user/login';
   }
   else {
+    // Cover the rest of the error which redirect to /user instead of 403
+    $type = 'error';
+    $redirect = 'user';
+
     switch ($invite->status()) {
       case INVITE_WITHDRAWN:
         $message = t('This invitation has been withdrawn.');
@@ -59,14 +66,20 @@ function invite_accept($invite) {
       case INVITE_EXPIRED:
         $message = t('This invitation has expired.');
         break;
-
-      default:
-        $redirect = 'user';
     }
   }
 
+  // Give a chance for customization.
+  $data = array(
+    'redirect' => &$redirect,
+    'message' => &$message,
+    'type' => &$type,
+    'invite' => $invite,
+  );
+  drupal_alter('invite_accept', $data);
+
   if (!empty($message)) {
-    drupal_set_message($message);
+    drupal_set_message($message, $type);
   }
   drupal_goto($redirect);
 }
