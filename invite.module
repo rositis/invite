@@ -226,7 +226,8 @@ function invite_menu() {
     'title' => 'Resend invitation',
     'page callback' => 'invite_resend',
     'page arguments' => array(2),
-    'access arguments' => array('send invitations'),
+    'access callback' => 'invite_resend_access',
+    'access arguments' => array(2),
     'type' => MENU_CALLBACK,
     'file' => 'includes/invite.pages.inc',
   );
@@ -313,6 +314,26 @@ function invite_withdraw_access($invite) {
 }
 
 /**
+ * Access callback for resend invitation.
+ *
+ * @param Invite $invite
+ *   The invitations to be resent.
+ *
+ * @return bool
+ *   Is user have access or no.
+ */
+function invite_resend_access($invite) {
+  global $user;
+
+  $is_valid   = $invite->joined == 0 && $invite->canceled == 0;
+  $access_own = user_access('resend own invitations') && $invite->uid == $user->uid;
+  $access_any = user_access('resend any invitations');
+  $is_expired = $invite->expiry < REQUEST_TIME || user_access('resend unexpired invitations');
+
+  return $is_valid && $is_expired && ($access_own || $access_any);
+}
+
+/**
  * Access callback for task Type.
  */
 function invite_type_access($op, $entity = NULL) {
@@ -368,6 +389,22 @@ function invite_permission() {
     'withdraw own accepted invitations' => array(
       'title' => t('Withdraw own accepted invitations'),
       'description' => t('Allows users to edit own invites.'),
+      'restrict access' => FALSE,
+    ),
+
+    'resend own invitations' => array(
+      'title' => t('Resend own invitations'),
+      'description' => t('Allows users to resend their invitations that have expired. Add the "resend unexpired invitations" permission to allow them to resend their invitations that have not expired yet.'),
+      'restrict access' => FALSE,
+    ),
+    'resend any invitations' => array(
+      'title' => t('Resend any invitations'),
+      'description' => t('Allows users to resend any invitation that have expired. Add the "resend unexpired invitations" permission to allow them to resend the invitations that have not expired yet.'),
+      'restrict access' => FALSE,
+    ),
+    'resend unexpired invitations' => array(
+      'title' => t('Resend unexpired invitations'),
+      'description' => t('Allows users to resend invitations that have not expired yet. This needs to be used in relation with the "resend own invitations" or "resend any invitations" permission.'),
       'restrict access' => FALSE,
     ),
   );

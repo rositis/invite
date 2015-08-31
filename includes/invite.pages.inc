@@ -94,15 +94,7 @@ function invite_accept($invite) {
  *   renderable array, representing a page.
  */
 function invite_resend($invite) {
-  global $user;
-
-  // Inviter must match current user and invitation must have expired.
-  if ($invite->uid == $user->uid && $invite->expiry < REQUEST_TIME && $invite->joined == 0 && $invite->canceled == 0) {
-    $invite->sendInvite();
-  }
-  else {
-    return MENU_ACCESS_DENIED;
-  }
+  $invite->sendInvite();
 
   return array(
     'message' => t('Invitation has been sucessfully resent.'),
