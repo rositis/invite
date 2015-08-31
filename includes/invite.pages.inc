@@ -162,6 +162,7 @@ function invite_withdraw_form_submit($form, &$form_state) {
   if (module_exists('rules')) {
     rules_invoke_event('invite_withdraw', $invite);
   }
-  drupal_goto('<front>');
+
+  $form_state['redirect'] = '<front>';
 }
 
