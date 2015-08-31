@@ -5,6 +5,7 @@ package = Invite
 
 files[] = includes/invite.controller.inc
 files[] = includes/invite.info.inc
+files[] = tests/InviteExpireTest.test
 
 ; Views includes
 files[] = views/invite.views_default.inc
