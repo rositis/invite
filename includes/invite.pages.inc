@@ -126,7 +126,8 @@ function invite_withdraw_form($form, &$form_state, $invite) {
     '#type' => 'value',
     '#value' => $invite,
   );
-  $description = (!$invite->joined && $invite->expiry > REQUEST_TIME) ? t("The invitee no longer be able to register using this invitation !invite<br/>", array('!invite' => drupal_render(entity_view('invite', array(entity_id('invite', $invite) => $invite), 'full')))) . ' ' : '';
+  $invite_render_tree = entity_view('invite', array(entity_id('invite', $invite) => $invite), 'full');
+  $description = (!$invite->joined && $invite->expiry > REQUEST_TIME) ? t('The invitee no longer be able to register using this invitation !invite<br/>', array('!invite' => drupal_render($invite_render_tree))) : '';
   $redirect = !empty($_REQUEST['destination']) ? $_REQUEST['destination'] : '<front>';
 
   return confirm_form(
