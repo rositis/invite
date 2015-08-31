@@ -264,7 +264,11 @@ function invite_by_email_invite_presave($invite) {
 
   $entity = entity_metadata_wrapper('invite', $invite);
   $mail_address = $entity->field_invitation_email_address->value();
-  if ($account = user_load_by_mail($mail_address)) {
+  // If the invited email address belongs to a current user, set that user as
+  // the invitee. But don't overwrite the invitee if the invite was already
+  // accepted, because in that case it represents the user account who actually
+  // accepted the invite and therefore should no longer be changed.
+  if (empty($invite->joined) && ($account = user_load_by_mail($mail_address))) {
     $invite->invitee = $account->uid;
   }
 
