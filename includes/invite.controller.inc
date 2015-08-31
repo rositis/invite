@@ -217,13 +217,15 @@ class InviteType extends Entity {
 
   public function __construct($values = array()) {
     parent::__construct($values, 'invite_type');
-    $controllers = db_select('invite_sending_controller', 'isc')
-      ->fields('isc')
-      ->condition('type', array($this->type))
-      ->execute();
-    $this->invite_sending_controller = array();
-    foreach ($controllers as $controller) {
-      $this->invite_sending_controller[$controller->name] = $controller->name;
+    if (empty($this->invite_sending_controller)) {
+      $controllers = db_select('invite_sending_controller', 'isc')
+        ->fields('isc')
+        ->condition('type', array($this->type))
+        ->execute();
+      $this->invite_sending_controller = array();
+      foreach ($controllers as $controller) {
+        $this->invite_sending_controller[$controller->name] = $controller->name;
+      }
     }
   }
 
