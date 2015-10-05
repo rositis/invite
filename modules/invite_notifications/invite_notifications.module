@@ -167,19 +167,22 @@ function invite_notifications_entity_insert($invite, $type) {
  * @param Invite $invite
  */
 function invite_notifications_invite_withdraw($invite) {
-  $uid = db_select('invite_notifications')
-    ->fields('invite_notifications', array('uid'))
-    ->condition('iid', $invite->iid)
-    ->execute()
-    ->fetchField();
+  if ($invite->invitee != 0) {
+    $uid = db_select('invite_notifications')
+      ->fields('invite_notifications', array('uid'))
+      ->condition('iid', $invite->iid)
+      ->execute()
+      ->fetchField();
 
-  db_delete('invite_notifications')
-    ->condition('iid', $invite->iid)
-    ->execute();
+    db_delete('invite_notifications')
+      ->condition('iid', $invite->iid)
+      ->execute();
 
-  $user = user_load($uid);
-  if (!_invite_notifications_user_messages($user)) {
-    user_save($user, array('data' => array('notification_received' => FALSE)));
+    $user = user_load($uid);
+
+    if (!_invite_notifications_user_messages($user)) {
+      user_save($user, array('data' => array('notification_received' => FALSE)));
+    }
   }
 }
 
