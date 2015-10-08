@@ -5,6 +5,19 @@ define('INVITE_SESSION_FAILED', 'invite_failed');
 define('INVITE_SESSION_ADMIN',  'invite_admin_filter');
 
 /**
+ * Validity constants.
+ */
+define('INVITE_VALID', 1);
+define('INVITE_WITHDRAWN', 2);
+define('INVITE_USED', 3);
+define('INVITE_EXPIRED', 4);
+
+// @TODO
+// - a way to update invite "status" for expired invite, cron likely. Until then,
+//   checking expiry is the best way.
+// - "canceled" is obsolete with "status", remove it.
+
+/**
  * Implements hook_entity_info().
  */
 function invite_entity_info() {
@@ -205,6 +218,20 @@ function invite_menu() {
   );
 
   // Frontend menu items
+  $weight = 20;
+  foreach (invite_get_types() as $type => $info) {
+    $items['user/%/invites/' . $type] = array(
+      'title' => $info->label,
+      'page callback' => 'invite_add',
+      'page arguments' => array(3),
+      'access callback' => 'invite_access',
+      'access arguments' => array('create', $type),
+      'file' => 'includes/invite.admin.inc',
+      'type' => MENU_LOCAL_TASK,
+      'weight' => $weight++,
+    );
+  }
+
   $items['invite/accept/%invite_by_code'] = array(
     'page callback' => 'invite_accept',
     'page arguments' => array(2),
@@ -297,6 +324,11 @@ function invite_access($op, $invite = NULL, $account = NULL, $entity_type = NULL
  */
 function invite_withdraw_access($invite) {
   global $user;
+
+  if ($invite->status = INVITE_WITHDRAWN) {
+    drupal_set_message(t('The invitation has already been withdrawn.'), 'error');
+    return FALSE;
+  }
 
   if (!$invite->joined ) {
     $permission = 'withdraw own invitations';
@@ -546,9 +578,6 @@ function invite_metadata_entity_get_properties($entity, array $options, $name, $
     case 'invite_resend_link':
       $result = url('invite/resend/' . $invite->reg_code->value(), array('absolute' => TRUE));
       break;
-    case 'status':
-      $result = $entity->status(TRUE);
-      break;
     default:
       $result = '';
   }
@@ -615,6 +644,28 @@ function invite_views_api() {
 }
 
 /**
+ * Implementation of hook_views_data_alter().
+ * - Allow views filter selection based on status text.
+ */
+function invite_views_data_alter(&$data) {
+  $data['invite']['status']['field']['handler'] = 'views_handler_field_invite_status';
+  $data['invite']['status']['filter']['handler'] = 'views_handler_filter_in_operator';
+  $data['invite']['status']['filter']['options callback'] = 'invite_get_status_options';
+}
+
+/**
+ * Helper function to return the list of status option.
+ */
+function invite_get_status_options() {
+  return array(
+    INVITE_VALID => t('Valid'),
+    INVITE_WITHDRAWN => t('Withdrawn'),
+    INVITE_USED => t('Joined'),
+    INVITE_EXPIRED => t('Expired'),
+  );
+}
+
+/**
  * Implements hook_user_login().
  */
 function invite_user_login($edit, $account) {
@@ -622,6 +673,7 @@ function invite_user_login($edit, $account) {
   if ($invite && $invite->status() == INVITE_VALID) {
     $invite->invitee = $account->uid;
     $invite->joined = REQUEST_TIME;
+    $invite->status = INVITE_USED;
     entity_save('invite', $invite);
 
     if (isset($_SESSION)) {
@@ -642,6 +694,7 @@ function invite_user_insert(&$edit, $account, $category) {
   if ($invite && $invite->status() == INVITE_VALID) {
     $invite->invitee = $account->uid;
     $invite->joined = REQUEST_TIME;
+    $invite->status = INVITE_USED;
     entity_save('invite', $invite);
 
     if (isset($_SESSION)) {

@@ -9,6 +9,7 @@ files[] = tests/InviteExpireTest.test
 
 ; Views includes
 files[] = views/invite.views_default.inc
+files[] = views/handlers/views_handler_field_invite_status.inc
 
 configure = admin/config/people/invite
 

@@ -439,6 +439,24 @@ function invite_migrate_process($values, &$context) {
       'canceled' => $record->canceled,
       'data' => $record->data,
     );
+
+    // Default to Valid.
+    $status = INVITE_VALID;
+
+    // Withdrawn.
+    if ($record->canceled != 0) {
+      $status = INVITE_WITHDRAWN;
+    }
+    // Used.
+    elseif ($record->joined != 0) {
+      $status = INVITE_USED;
+    }
+    // Expired.
+    elseif ($record->expiry < REQUEST_TIME) {
+      $status = INVITE_EXPIRED;
+    }
+    $invite_data['status'] = $status;
+
     $invite = new Invite($invite_data);
     $invite->field_invitation_email_address[LANGUAGE_NONE][0]['value'] = $record->email;
     $data = unserialize($record->data);

@@ -36,6 +36,7 @@ function invite_accept($invite) {
   elseif (!empty($user->uid) && ($invite->status() == INVITE_VALID)) {
     $invite->invitee = $user->uid;
     $invite->joined = REQUEST_TIME;
+    $invite->status = INVITE_USED;
     entity_save('invite', $invite);
 
     unset($_SESSION[INVITE_SESSION_CODE]);
@@ -50,7 +51,7 @@ function invite_accept($invite) {
     $redirect = 'user/login';
   }
   else {
-    // Cover the rest of the error which redirect to /user instead of 403
+    // Cover the rest of the error which redirect to /user instead of 403.
     $type = 'error';
     $redirect = 'user';
 
@@ -143,8 +144,9 @@ function invite_withdraw_form_submit($form, &$form_state) {
 
   db_update('invite')
     ->fields(array(
-    'canceled' => 1,
-  ))
+      'canceled' => 1,
+      'status' => INVITE_WITHDRAWN,
+    ))
     ->condition('reg_code', $invite->reg_code)
     ->execute();
 
