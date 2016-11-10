@@ -349,7 +349,7 @@ function invite_by_email_send_invitation($invite) {
   global $language;
 
   // Check if this is an existing invite.
-  $existing_invite = invite_load($invite->reg_code);
+  $existing_invite = invite_load($invite->iid);
   if ($existing_invite) {
     $invite->expiry = REQUEST_TIME + (variable_get('invite_default_expiry_time', 30) * 60 * 60 * 24);
   }
