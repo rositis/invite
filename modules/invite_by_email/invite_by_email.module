@@ -483,10 +483,8 @@ function invite_by_email_form_invite_form_validate($form, &$form_state) {
     ->execute()
     ->fetchField();
 
-  if ($duplicate) {
-    if ($entity->inviter->mail->value() == $mail_address) {
-      form_set_error('field_invitation_email_address', t('You have invited this user already.'));
-    }
+  if ($duplicate && $duplicate == $mail_address) {
+    form_set_error('field_invitation_email_address', t('You have invited this user already.'));
   }
 }
 
