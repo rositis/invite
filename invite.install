@@ -213,9 +213,19 @@ function invite_update_7400() {
  * Adding 'status' to invite table.
  */
 function invite_update_7401() {
+
+  // The status field might already exist on the invite table with incorrect settings.
+  // We need to check if the status field exists in the invite table if it does drop it.
+  // We are going to overwrite all values in the status field later in this update hook
+  // so dropping this field won't have any negative consequences.
+  if (db_field_exists('invite', 'status')) {
+    db_drop_field('invite', 'status');
+  }
+
+  // Add status field to invite table
   db_add_field('invite', 'status', array('type' => 'int', 'not null' => TRUE, 'description' => 'Invitation status.'));
 
-  // Calculate and store invite status from exisitng data.
+  // Calculate and store invite status from exisiting data.
   $invites = db_select('invite', 'i')
     ->fields('i', array('iid', 'created', 'canceled', 'joined', 'expiry'))
     ->execute();
