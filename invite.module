@@ -325,7 +325,7 @@ function invite_access($op, $invite = NULL, $account = NULL, $entity_type = NULL
 function invite_withdraw_access($invite) {
   global $user;
 
-  if ($invite->status = INVITE_WITHDRAWN) {
+  if ($invite->status == INVITE_WITHDRAWN) {
     drupal_set_message(t('The invitation has already been withdrawn.'), 'error');
     return FALSE;
   }
@@ -337,7 +337,7 @@ function invite_withdraw_access($invite) {
     $permission = 'withdraw own accepted invitations';
   }
 
-  if (($invite->uid == $user->uid && user_access($permission)) || user_access('administer invitations')) {
+  if ((($invite->uid == $user->uid || $invite->invitee == $user->uid) && user_access($permission)) || user_access('administer invitations')) {
     return TRUE;
   }
   else {
