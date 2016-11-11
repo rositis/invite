@@ -121,11 +121,29 @@ function invite_type_form_submit_delete(&$form, &$form_state) {
  *   Renderable array
  */
 function invite_admin_add_page() {
-  $items = array();
+  $items = [];
   foreach (invite_get_types() as $invite_type_key => $invite_type) {
     $items[] = l(entity_label('invite_type', $invite_type), 'invite/add/' . $invite_type_key);
   }
-  return array('list' => array('#theme' => 'item_list', '#items' => $items, '#title' => t('Select type of invite to create.')));
+
+  if (sizeof($items) < 1) {
+    $form_element = [
+      'list' => [
+        '#markup' => '<h3>No invite types have been enabled.</h3><br /><p>To create invites at least one invite type must be enabled.</p>',
+      ]
+    ];
+  }
+  else {
+    $form_element = [
+      'list' => [
+        '#theme' => 'item_list',
+        '#items' => $items,
+        '#title' => t('Select type of invite to create.')
+      ]
+    ];
+  }
+
+  return $form_element;
 }
 
 /**
