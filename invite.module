@@ -18,6 +18,11 @@ define('INVITE_EXPIRED', 4);
 // - "canceled" is obsolete with "status", remove it.
 
 /**
+ * Registration settings form values.
+ */
+define('USER_REGISTER_INVITATION_ONLY', 3);
+
+/**
  * Implements hook_entity_info().
  */
 function invite_entity_info() {
@@ -274,6 +279,88 @@ function invite_menu() {
   }
 
   return $items;
+}
+
+/**
+ * Alter Account Settings form.
+ *
+ * Add new registration mode 'by invitation only'. By prepending the
+ * option value with a numeric value, other modules still work as
+ * expected, as long as they are using the non-strict PHP comparison
+ * operator (since '1-inviteonly' == 1 yields TRUE). To determine the real
+ * setting use invite_user_registration_by_invite_only().
+ *
+ * However, setting the new mode is only allowed if no other module
+ * has overridden the menu access handler for the user registration form.
+ *
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
+function invite_form_user_admin_settings_alter(&$form, &$form_state, $form_id) {
+  $item = menu_get_item('user/register');
+  if (in_array($item['access_callback'], array('user_register_access', 'invite_user_register_access'))) {
+    $form['registration_cancellation']['user_register']['#options'][USER_REGISTER_INVITATION_ONLY] = t('Invitees only');
+  }
+  // Clear menu cache on submit to allow our custom access handler to snap in.
+  $form['#submit'][] = 'menu_rebuild';
+}
+
+
+/**
+ * Implements hook_menu_alter().
+ *
+ * Override the user/register menu access handler with a custom
+ * implementation.
+ */
+function invite_menu_alter(&$items) {
+  if (invite_user_registration_by_invite_only()) {
+    $items['user/register']['access callback'] = 'invite_user_register_access';
+  }
+}
+
+/**
+ * Determine if user registration mode is set to invite only.
+ */
+function invite_user_registration_by_invite_only() {
+  return (variable_get('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) == USER_REGISTER_INVITATION_ONLY);
+}
+
+/**
+ * Access callback; determine access to user registration form.
+ */
+function invite_user_register_access() {
+  $invite = invite_load_from_session();
+
+  if ((empty($invite) || invite_validate($invite) != INVITE_VALID) && !user_access('administer users')) {
+    return FALSE;
+  }
+
+  // Let the default handler take care of standard conditions.
+  return user_register_access();
+}
+
+/**
+ * Checks the status of an invite.
+ *
+ * @param $invite
+ *   An invite object as returned by invite_load().
+ * @return integer
+ *   The constant corresponding to the status of the invite.
+ */
+function invite_validate($invite) {
+  if (!$invite || $invite->canceled != 0) {
+    return INVITE_WITHDRAWN;
+  }
+  elseif ($invite->joined != 0) {
+    return INVITE_USED;
+  }
+  elseif ($invite->expiry < REQUEST_TIME) {
+    return INVITE_EXPIRED;
+  }
+  else {
+    return INVITE_VALID;
+  }
 }
 
 /**
