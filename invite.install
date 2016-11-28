@@ -223,7 +223,14 @@ function invite_update_7401() {
   }
 
   // Add status field to invite table
-  db_add_field('invite', 'status', array('type' => 'int', 'not null' => TRUE, 'description' => 'Invitation status.'));
+  $specs = [
+    'type' => 'int',
+    'not null' => TRUE,
+    'description' => 'Invitation status.',
+    'default' => 1,
+    'initial' => 1,
+  ];
+  db_add_field('invite', 'status', $specs);
 
   // Calculate and store invite status from exisiting data.
   $invites = db_select('invite', 'i')
