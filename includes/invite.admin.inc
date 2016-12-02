@@ -197,7 +197,7 @@ function invite_form($form, &$form_state, $invite) {
   );
 
   // Show Delete button if we edit invite.
-  $invite_id = entity_id('invite' ,$invite);
+  $invite_id = entity_id('invite', $invite);
   if (!empty($invite_id) && invite_access('edit', $invite)) {
     $form['actions']['delete'] = array(
       '#type' => 'submit',
@@ -261,7 +261,7 @@ function invite_form_submit_delete($form, &$form_state) {
 function invite_delete_form($form, &$form_state, $invite) {
   $form_state['invite'] = $invite;
   // Always provide entity id in the same form key as in the entity edit form.
-  $form['invite_type_id'] = array('#type' => 'value', '#value' => entity_id('invite' ,$invite));
+  $form['invite_type_id'] = array('#type' => 'value', '#value' => entity_id('invite', $invite));
   $invite_uri = entity_uri('invite', $invite);
   return confirm_form($form,
     t('Are you sure you want to delete %title?', array('%title' => entity_label('invite', $invite))),
@@ -404,7 +404,7 @@ function invite_migrate_form_validate($form, &$form_state) {
       'field_invitation_email_body',
     );
     $verified_fields = 0;
-    foreach(field_info_instances('invite', 'invite_by_email') as $field_name => $field) {
+    foreach (field_info_instances('invite', 'invite_by_email') as $field_name => $field) {
       if (in_array($field_name, $needed_fields)) {
         $verified_fields++;
       }

@@ -614,7 +614,7 @@ function invite_save($invite) {
  * @param Invite $invite
  */
 function invite_delete($invite) {
-  entity_delete('invite', entity_id('invite' ,$invite));
+  entity_delete('invite', entity_id('invite', $invite));
 }
 
 /**
