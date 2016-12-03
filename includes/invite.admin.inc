@@ -228,13 +228,20 @@ function invite_form_validate($form, &$form_state) {
  * @param $form_state
  */
 function invite_form_submit($form, &$form_state) {
+  global $user;
   $invite = $form_state['invite'];
+  $token_data = array(
+    'invite' => $invite,
+    'user' => $user,
+    'profile' => user_load($user->uid),
+  );
 
   entity_form_submit_build_entity('invite', $invite, $form, $form_state);
 
   if (invite_save($invite)) {
     $invite_uri = entity_uri('invite', $invite);
-    $form_state['redirect'] = $invite_uri['path'];
+    $invite_redirect = token_replace(variable_get('invite_redirect_upon_create', NULL), $token_data);
+    $form_state['redirect'] = $invite_redirect ? $invite_redirect : $invite_uri;
   }
 }
 
@@ -318,6 +325,26 @@ function invite_settings_form() {
     '#default_value' => variable_get('invite_require_approval', FALSE),
     '#description' => t('Accounts that have been created with an invitation will require administrator approval.'),
   );
+
+  $form['invite_redirect_upon_create'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Redirect to path after invite created.'),
+    '#default_value' => variable_get('invite_redirect_upon_create', '[invite:url]'),
+    '#description' => t('Optional redirect path after creation of invite. <a></a>'),
+  );
+
+  if (module_exists('token')) {
+    $form['token_help'] = array(
+      '#title' => t('Replacement patterns'),
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+
+    $form['token_help']['help'] = array(
+      '#markup' => theme('token_tree', array('token_types' => array('user', 'profile', 'invite'))),
+    );
+  }
 
   return system_settings_form($form);
 }
