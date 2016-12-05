@@ -91,7 +91,7 @@ function invite_accept($invite) {
  * @param Invite $invite
  *   An invite object.
  *
- * @return Array
+ * @return array
  *   renderable array, representing a page.
  */
 function invite_resend($invite) {
@@ -114,6 +114,7 @@ function invite_resend($invite) {
  * @param $form_state
  * @param Invite $invite
  *   Invite object.
+ *
  * @return array
  */
 function invite_withdraw_form($form, &$form_state, $invite) {
@@ -164,4 +165,3 @@ function invite_withdraw_form_submit($form, &$form_state) {
 
   $form_state['redirect'] = '<front>';
 }
-

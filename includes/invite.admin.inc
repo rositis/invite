@@ -7,6 +7,7 @@
  * @param $form_state
  * @param InviteType $invite_type
  * @param string $op
+ *
  * @return array
  */
 function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
@@ -80,7 +81,7 @@ function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
       '#value' => t('Delete invite type'),
       '#weight' => 45,
       '#limit_validation_errors' => array(),
-      '#submit' => array('invite_type_form_submit_delete')
+      '#submit' => array('invite_type_form_submit_delete'),
     );
   }
   return $form;
@@ -127,20 +128,20 @@ function invite_admin_add_page() {
   }
 
   if (sizeof($items) < 1) {
-    $form_element = [
-      'list' => [
+    $form_element = array(
+      'list' => array(
         '#markup' => '<h3>No invite types have been enabled.</h3><br /><p>To create invites at least one invite type must be enabled.</p>',
-      ]
-    ];
+      ),
+    );
   }
   else {
-    $form_element = [
-      'list' => [
+    $form_element = array
+      'list' => array(
         '#theme' => 'item_list',
         '#items' => $items,
-        '#title' => t('Select type of invite to create.')
-      ]
-    ];
+        '#title' => t('Select type of invite to create.'),
+      ),
+    );
   }
 
   return $form_element;
@@ -150,6 +151,7 @@ function invite_admin_add_page() {
  * Add new invite page callback.
  *
  * @param string $type
+ *
  * @return array|mixed
  */
 function invite_add($type) {
@@ -169,6 +171,7 @@ function invite_add($type) {
  * @param $form
  * @param $form_state
  * @param Invite $invite
+ *
  * @return array
  */
 function invite_form($form, &$form_state, $invite) {
@@ -246,7 +249,7 @@ function invite_form_submit($form, &$form_state) {
 }
 
 /**
- * Invite delete form handler
+ * Invite delete form handler.
  *
  * @param $form
  * @param $form_state
@@ -263,6 +266,7 @@ function invite_form_submit_delete($form, &$form_state) {
  * @param $form
  * @param $form_state
  * @param Invite $invite
+ *
  * @return array
  */
 function invite_delete_form($form, &$form_state, $invite) {
@@ -396,7 +400,7 @@ function invite_migrate_form() {
     );
 
     $form['actions'] = array(
-      '#type' => 'actions'
+      '#type' => 'actions',
     );
 
     $form['actions']['submit'] = array(
@@ -455,7 +459,7 @@ function invite_migrate_form_submit($form, &$form_state) {
       'operations' => array(
         array('invite_migrate_process', array($form_state['values'])),
       ),
-      'file' => drupal_get_path('module', 'invite') . '/includes/invite.admin.inc'
+      'file' => drupal_get_path('module', 'invite') . '/includes/invite.admin.inc',
     );
     batch_set($batch);
     batch_process();
