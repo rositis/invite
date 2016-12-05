@@ -135,7 +135,7 @@ function invite_admin_add_page() {
     );
   }
   else {
-    $form_element = array
+    $form_element = array(
       'list' => array(
         '#theme' => 'item_list',
         '#items' => $items,
