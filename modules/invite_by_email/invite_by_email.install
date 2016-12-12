@@ -75,6 +75,12 @@ function invite_by_email_uninstall() {
   foreach ($fields as $field) {
     field_delete_field($field);
   }
+
+  $num_deleted = db_delete('field_config_instance')
+    ->condition('bundle', 'invite_by_email')
+    ->execute();
+
+  drupal_cron_run();
 }
 
 function invite_by_email_add_fields() {
@@ -124,6 +130,10 @@ function invite_by_email_add_fields() {
           'type' => 'text_textfield',
           'weight' => 20,
         ),
+        'settings' => array(
+          'text_processing' => 0,
+        ),
+        'format' => 'plain_text',
         'display' => array(
           'default' => array(
             'type' => 'text_textfield',
@@ -153,6 +163,10 @@ function invite_by_email_add_fields() {
           'type' => 'text_textarea',
           'weight' => 30,
         ),
+        'settings' => array(
+          'text_processing' => 0,
+        ),
+        'format' => 'plain_text',
         'display' => array(
           'default' => array(
             'type' => 'text_textarea',
