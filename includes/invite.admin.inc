@@ -122,7 +122,7 @@ function invite_type_form_submit_delete(&$form, &$form_state) {
  *   Renderable array
  */
 function invite_admin_add_page() {
-  $items = [];
+  $items = array();
   foreach (invite_get_types() as $invite_type_key => $invite_type) {
     $items[] = l(entity_label('invite_type', $invite_type), 'invite/add/' . $invite_type_key);
   }
