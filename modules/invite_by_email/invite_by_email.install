@@ -198,3 +198,20 @@ function invite_by_email_add_fields() {
 function invite_by_email_update_7001(&$sandbox) {
   invite_by_email_add_fields();
 }
+
+/**
+ * Update field instance info for email subject and body if empty set default value.
+ */
+function invite_by_email_update_7002(&$sandbox) {
+  $instance_info = field_info_instance('invite', 'field_invitation_email_subject', 'invite_by_email');
+  if (empty($instance_info['default_value'][0]['value'])) {
+    $instance_info['default_value'][0]['value'] = variable_get('invite_default_mail_subject', '');
+  }
+  field_update_instance($instance_info);
+
+  $instance_info = field_info_instance('invite', 'field_invitation_email_body', 'invite_by_email');
+  if (empty($instance_info['default_value'][0]['value'])) {
+    $instance_info['default_value'][0]['value'] = variable_get('invite_default_mail_body', '');
+  }
+  field_update_instance($instance_info);
+}
