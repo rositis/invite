@@ -140,21 +140,11 @@ function invite_by_email_invite_type_presave($invite_type) {
  * Implements hook_invite_presave().
  */
 function invite_by_email_invite_presave($invite) {
-  global $user;
   if (empty($invite->type_details()->invite_sending_controller['invite_by_email'])) {
     return FALSE;
   }
 
-  $entity = entity_metadata_wrapper('invite', $invite);
-  $mail_address = $entity->field_invitation_email_address->value();
-  if ($account = user_load_by_mail($mail_address)) {
-    $invite->invitee = $account->uid;
-  }
-
-  $invite->data['subject'] = $entity->field_invitation_email_subject->value();
-  $email_body = $entity->field_invitation_email_body->value();
-  $email_body_text = isset($email_body['format']) ? $email_body['value'] : $email_body;
-  $invite->data['message'] = $email_body_text;
+  global $user;
 
   $invite_by_email_settings = $invite->type_details()->data['invite_by_email'];
 
@@ -164,13 +154,9 @@ function invite_by_email_invite_presave($invite) {
       'user' => $user,
       'profile' => user_load($user->uid),
     );
-    $entity->field_invitation_email_subject = token_replace(trim($entity->field_invitation_email_subject->value()), $token_data);
-    if (isset($email_body['format'])) {
-      $entity->field_invitation_email_body->value->set(token_replace($email_body_text, $token_data));
-    }
-    else {
-      $entity->field_invitation_email_body = token_replace($email_body_text, $token_data);
-    }
+
+    $invite->field_invitation_email_subject[LANGUAGE_NONE][0]['value'] = token_replace(trim($invite->field_invitation_email_subject[LANGUAGE_NONE][0]['value']), $token_data);
+    $invite->field_invitation_email_body[LANGUAGE_NONE][0]['value'] = token_replace($invite->field_invitation_email_body[LANGUAGE_NONE][0]['value'], $token_data);
   }
 }
 
