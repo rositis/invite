@@ -35,8 +35,8 @@ TEMPLATE
   );
 
   foreach ($types as $type) {
-    $invite_type = entity_get_info($type['type']);
-    if (empty($invite_type)) {
+    $invite_by_email = entity_load('invite_type', FALSE, ['type' => 'invite_by_email']);
+    if (empty($invite_by_email)) {
       $invite_type = entity_create('invite_type', $type);
       if ($invite_type) {
         $invite_type->invite_sending_controller = $type['invite_sending_controller'];
@@ -50,13 +50,6 @@ TEMPLATE
  * Implements hook_disable().
  */
 function invite_by_email_disable() {
-  $invite_type = invite_type_load('invite_by_email');
-  invite_type_delete($invite_type);
-
-  db_delete('invite_sending_controller')
-    ->condition('name', 'invite_by_email')
-    ->execute();
-
   variable_del('invite_default_mail_body');
   variable_del('invite_default_mail_subject');
 }
@@ -65,6 +58,12 @@ function invite_by_email_disable() {
  * Implements hook_uninstall().
  */
 function invite_by_email_uninstall() {
+  $invite_type = invite_type_load('invite_by_email');
+  invite_type_delete($invite_type);
+
+  db_delete('invite_sending_controller')
+    ->condition('name', 'invite_by_email')
+    ->execute();
 
   $fields = array(
     'field_invitation_email_address',
