@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @file
+ */
+
 define('INVITE_SESSION_CODE', 'invite_code');
 define('INVITE_SESSION_FAILED', 'invite_failed');
 define('INVITE_SESSION_ADMIN', 'invite_admin_filter');
@@ -13,8 +17,8 @@ define('INVITE_USED', 3);
 define('INVITE_EXPIRED', 4);
 
 // @TODO
-// - a way to update invite "status" for expired invite, cron likely. Until then,
-//   checking expiry is the best way.
+// - a way to update invite "status" for expired invite, cron likely. Until
+// then, checking expiry is the best way.
 // - "canceled" is obsolete with "status", remove it.
 /**
  * Registration settings form values.
@@ -733,7 +737,8 @@ function invite_type_delete($invite_type) {
 /**
  * Delete multiple Invite types.
  *
- * @param array|string $invite_type_ids
+ * @param mixed $invite_type_ids
+ *   ID' of invite types.
  */
 function invite_type_delete_multiple($invite_type_ids) {
   entity_delete_multiple('invite_type', $invite_type_ids);
