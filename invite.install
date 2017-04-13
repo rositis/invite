@@ -183,7 +183,20 @@ function invite_install() {
  */
 function invite_uninstall() {
 
-  variable_del('invite_default_expiry_time');
+  $invite_vars = array(
+    'invite_message_editable',
+    'invite_default_mail_subject',
+    'invite_default_mail_body',
+    'invite_default_replace_tokens',
+    'invite_message_editable',
+    'invite_use_users_email_replyto',
+    'invite_manual_from',
+    'invite_use_users_email',
+  );
+
+  foreach ($invite_vars as $invite_var) {
+    variable_del($invite_var);
+  }
 
   $variables = db_select('variable', 'v')
     ->fields('v')
