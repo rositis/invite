@@ -21,6 +21,14 @@ function invite_by_email_settings_form() {
     '#required' => TRUE,
   );
 
+  // Display the list of available placeholders if token module is installed.
+  if (module_exists('token')) {
+    $form['auto_entitylabel']['token_help'] = array(
+      '#theme' => 'token_tree',
+      '#dialog' => TRUE,
+    );
+  }
+
   $form['invite_default_mail_body'] = array(
     '#type' => 'textarea',
     '#title' => t('Mail template'),
