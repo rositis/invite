@@ -96,37 +96,37 @@ function invite_schema() {
   $schema['invite_type'] = array(
     'description' => 'Stores information about all defined invite types.',
     'fields' => array(
-      'itid' => array(
-        'type' => 'serial',
-        'not null' => TRUE,
-        'description' => 'Primary Key: Unique invite type ID.',
-      ),
-      'type' => array(
-        'description' => 'The machine-readable name of this type.',
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => TRUE,
-      ),
-      'label' => array(
-        'description' => 'The human-readable name of this type.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'description' => array(
-        'description' => 'A brief description of this type.',
-        'type' => 'text',
-        'not null' => TRUE,
-        'size' => 'medium',
-        'translatable' => TRUE,
-      ),
-      'data' => array(
-        'description' => 'Stores auxiliary data.',
-        'type' => 'text',
-        'not null' => TRUE,
-        'serialize' => TRUE,
-      ),
+  'itid' => array(
+    'type' => 'serial',
+    'not null' => TRUE,
+    'description' => 'Primary Key: Unique invite type ID.',
+  ),
+  'type' => array(
+    'description' => 'The machine-readable name of this type.',
+    'type' => 'varchar',
+    'length' => 32,
+    'not null' => TRUE,
+  ),
+  'label' => array(
+    'description' => 'The human-readable name of this type.',
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'default' => '',
+  ),
+  'description' => array(
+    'description' => 'A brief description of this type.',
+    'type' => 'text',
+    'not null' => TRUE,
+    'size' => 'medium',
+    'translatable' => TRUE,
+  ),
+  'data' => array(
+    'description' => 'Stores auxiliary data.',
+    'type' => 'text',
+    'not null' => TRUE,
+    'serialize' => TRUE,
+  ),
     ) + entity_exportable_schema_fields(),
     'primary key' => array('itid'),
     'unique keys' => array(
@@ -176,6 +176,16 @@ function invite_schema() {
 function invite_install() {
   // Set default expiry time 30 days.
   variable_set('invite_default_expiry_time', 30);
+
+  drupal_set_message(t('Thank you for installing the <a href="@url_invite" target="blank">Invite</a>.', array(
+    '@url_invite' => 'https://www.drupal.org/project/invite',
+  )));
+
+  // Notify the user they may want to install token.
+  if (!module_exists('token')) {
+    $t = get_t();
+    drupal_set_message($t('If you install the <a href="!url" target="blank">Token</a>, Invite will be able to use token patterns.', array('!url' => 'http://drupal.org/project/token')));
+  }
 }
 
 /**
@@ -199,9 +209,9 @@ function invite_uninstall() {
   }
 
   $variables = db_select('variable', 'v')
-    ->fields('v')
-    ->condition('name', 'invite_type_%', 'LIKE')
-    ->execute();
+      ->fields('v')
+      ->condition('name', 'invite_type_%', 'LIKE')
+      ->execute();
   foreach ($variables as $variable) {
     variable_del($variable->name);
   }
@@ -255,8 +265,8 @@ function invite_update_7401() {
 
   // Calculate and store invite status from existing data.
   $invites = db_select('invite', 'i')
-    ->fields('i', array('iid', 'created', 'canceled', 'joined', 'expiry'))
-    ->execute();
+      ->fields('i', array('iid', 'created', 'canceled', 'joined', 'expiry'))
+      ->execute();
 
   foreach ($invites as $invite) {
     // Default to Valid.
@@ -276,8 +286,8 @@ function invite_update_7401() {
     }
 
     db_update('invite')
-      ->fields(array('status' => $status))
-      ->condition('iid', $invite->iid)
-      ->execute();
+        ->fields(array('status' => $status))
+        ->condition('iid', $invite->iid)
+        ->execute();
   }
 }
