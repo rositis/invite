@@ -58,8 +58,11 @@ function invite_by_email_disable() {
  * Implements hook_uninstall().
  */
 function invite_by_email_uninstall() {
-  $invite_type = invite_type_load('invite_by_email');
-  invite_type_delete($invite_type);
+
+  if (function_exists('invite_type_load')) {
+    $invite_type = invite_type_load('invite_by_email');
+    invite_type_delete($invite_type);
+  }
 
   db_delete('invite_sending_controller')
     ->condition('name', 'invite_by_email')
@@ -76,8 +79,8 @@ function invite_by_email_uninstall() {
   }
 
   $num_deleted = db_delete('field_config_instance')
-    ->condition('bundle', 'invite_by_email')
-    ->execute();
+      ->condition('bundle', 'invite_by_email')
+      ->execute();
 
   drupal_cron_run();
 }
