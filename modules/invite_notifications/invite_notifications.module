@@ -112,7 +112,6 @@ function theme_invite_registered_user_notification($variables) {
  * @param Invite $invite
  */
 function invite_notifications_invite_accept($invite) {
-  global $user;
   $message = array(
     'iid' => $invite->iid,
     'uid' => $invite->uid,
@@ -146,7 +145,6 @@ function invite_notifications_invite_accept($invite) {
  * @param $type
  */
 function invite_notifications_entity_insert($invite, $type) {
-  global $user;
   if (!empty($invite->invitee) && ($invite->status() == INVITE_VALID)) {
     $message = array(
       'iid' => $invite->iid,
