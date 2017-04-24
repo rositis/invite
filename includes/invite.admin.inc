@@ -221,7 +221,7 @@ function invite_form($form, &$form_state, $invite) {
  * @param $form_state
  */
 function invite_form_validate($form, &$form_state) {
-
+  
 }
 
 /**
@@ -274,12 +274,7 @@ function invite_delete_form($form, &$form_state, $invite) {
   // Always provide entity id in the same form key as in the entity edit form.
   $form['invite_type_id'] = array('#type' => 'value', '#value' => entity_id('invite', $invite));
   $invite_uri = entity_uri('invite', $invite);
-  return confirm_form($form,
-    t('Are you sure you want to delete %title?', array('%title' => entity_label('invite', $invite))),
-    $invite_uri['path'],
-    t('This action cannot be undone.'),
-    t('Delete'),
-    t('Cancel')
+  return confirm_form($form, t('Are you sure you want to delete %title?', array('%title' => entity_label('invite', $invite))), $invite_uri['path'], t('This action cannot be undone.'), t('Delete'), t('Cancel')
   );
 }
 
@@ -351,6 +346,20 @@ function invite_settings_form() {
   }
 
   return system_settings_form($form);
+}
+
+/**
+ * Implements hook_validate().
+ */
+function invite_settings_form_validate($form, &$form_state) {
+
+  $invite_registration_path = $form_state['values']['invite_registration_path'];
+
+  $is_valid_path = drupal_valid_path($invite_registration_path);
+
+  if (!$is_valid_path) {
+    form_set_error('invite_registration_path', t('This path is invalid.'));
+  }
 }
 
 /**
@@ -468,7 +477,7 @@ function invite_migrate_form_submit($form, &$form_state) {
 
 function invite_migrate_process($values, &$context) {
   $query = db_select('invite_2x', 'i2x')
-    ->fields('i2x');
+      ->fields('i2x');
   if (empty($context['sandbox'])) {
     $context['sandbox']['progress'] = 0;
     $context['sandbox']['max'] = $query->countQuery()->execute()->fetchField();
@@ -514,7 +523,7 @@ function invite_migrate_process($values, &$context) {
     $invite->sendNotification = FALSE;
     $invite->save();
 
-    $context['sandbox']['progress']++;
+    $context['sandbox']['progress'] ++;
   }
   variable_del('invite_migration_in_progress');
   if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
