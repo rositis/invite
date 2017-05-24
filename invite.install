@@ -96,38 +96,38 @@ function invite_schema() {
   $schema['invite_type'] = array(
     'description' => 'Stores information about all defined invite types.',
     'fields' => array(
-        'itid' => array(
-          'type' => 'serial',
-          'not null' => TRUE,
-          'description' => 'Primary Key: Unique invite type ID.',
-        ),
-        'type' => array(
-          'description' => 'The machine-readable name of this type.',
-          'type' => 'varchar',
-          'length' => 32,
-          'not null' => TRUE,
-        ),
-        'label' => array(
-          'description' => 'The human-readable name of this type.',
-          'type' => 'varchar',
-          'length' => 255,
-          'not null' => TRUE,
-          'default' => '',
-        ),
-        'description' => array(
-          'description' => 'A brief description of this type.',
-          'type' => 'text',
-          'not null' => TRUE,
-          'size' => 'medium',
-          'translatable' => TRUE,
-        ),
-        'data' => array(
-          'description' => 'Stores auxiliary data.',
-          'type' => 'text',
-          'not null' => TRUE,
-          'serialize' => TRUE,
-        ),
-      ) + entity_exportable_schema_fields(),
+      'itid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique invite type ID.',
+      ),
+      'type' => array(
+        'description' => 'The machine-readable name of this type.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The human-readable name of this type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'description' => array(
+        'description' => 'A brief description of this type.',
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'medium',
+        'translatable' => TRUE,
+      ),
+      'data' => array(
+        'description' => 'Stores auxiliary data.',
+        'type' => 'text',
+        'not null' => TRUE,
+        'serialize' => TRUE,
+      ),
+    ) + entity_exportable_schema_fields(),
     'primary key' => array('itid'),
     'unique keys' => array(
       'type' => array('type'),
