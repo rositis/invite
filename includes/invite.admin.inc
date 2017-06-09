@@ -1,6 +1,10 @@
 <?php
 
 /**
+ * @file
+ */
+
+/**
  * Generates the invite type editing form.
  *
  * @param $form
@@ -480,6 +484,9 @@ function invite_migrate_form_submit($form, &$form_state) {
   }
 }
 
+/**
+ *
+ */
 function invite_migrate_process($values, &$context) {
   $query = db_select('invite_2x', 'i2x')
     ->fields('i2x');

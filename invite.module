@@ -893,7 +893,7 @@ function invite_cron() {
   $results = $query->execute();
 
   $invites = entity_load('invite', array_keys($results['invite']));
-  foreach($invites as $invite) {
+  foreach ($invites as $invite) {
     $invite->status = INVITE_EXPIRED;
     entity_save('invite', $invite);
   }
