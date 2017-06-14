@@ -41,7 +41,7 @@ TEMPLATE
   );
 
   foreach ($types as $type) {
-    $invite_by_email = entity_load('invite_type', FALSE, ['type' => 'invite_by_email']);
+    $invite_by_email = entity_load('invite_type', FALSE, array('type' => 'invite_by_email'));
     if (empty($invite_by_email)) {
       $invite_type = entity_create('invite_type', $type);
       if ($invite_type) {
