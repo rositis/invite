@@ -892,9 +892,11 @@ function invite_cron() {
     ->propertyCondition('status', INVITE_VALID, "=");
   $results = $query->execute();
 
-  $invites = entity_load('invite', array_keys($results['invite']));
-  foreach ($invites as $invite) {
-    $invite->status = INVITE_EXPIRED;
-    entity_save('invite', $invite);
+  if (!empty($results) && !empty($results['invite'])) {
+    $invites = entity_load('invite', array_keys($results['invite']));
+    foreach ($invites as $invite) {
+      $invite->status = INVITE_EXPIRED;
+      entity_save('invite', $invite);
+    }
   }
 }
