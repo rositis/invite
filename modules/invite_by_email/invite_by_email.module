@@ -303,7 +303,12 @@ function invite_by_email_form_invite_form_alter(&$form, &$form_state, $form_id) 
   $invite = $form['#entity'];
 
   if (!empty($invite->type_details()->invite_sending_controller['invite_by_email'])) {
-    $language_subject = $form['field_invitation_email_subject']['#language'];
+
+    $language_subject = LANGUAGE_NONE;
+    if (!empty($form['field_invitation_email_subject']['#language'])) {
+      $language_subject = $form['field_invitation_email_subject']['#language'];
+    }
+
     $invite_by_email_settings = isset($invite->type_details()->data['invite_by_email']) ? $invite->type_details()->data['invite_by_email'] : array('use_default' => TRUE);
 
     if ($invite_by_email_settings['use_default']) {
