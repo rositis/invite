@@ -141,7 +141,7 @@ function invite_menu() {
   $items['invite/add'] = array(
     'title' => 'Add Invite',
     'page callback' => 'invite_admin_add_page',
-    'access arguments' => array('create invites'),
+    'access arguments' => array('create any invite entities'),
     'file' => 'includes/invite.admin.inc',
     'type' => MENU_LOCAL_ACTION,
     'tab_parent' => 'invite',
