@@ -87,7 +87,7 @@ function invite_accept($invite) {
   if (!empty($message)) {
     drupal_set_message($message, $type);
   }
-  drupal_goto($redirect);
+  drupal_redirect_form($data);
 }
 
 /**
