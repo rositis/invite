@@ -169,8 +169,6 @@ function invite_menu() {
 
   $items[$invite_uri . '/delete'] = array(
     'title' => 'Delete invite',
-    'title callback' => 'invite_label',
-    'title arguments' => array($invite_uri_argument_position),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('invite_delete_form', $invite_uri_argument_position),
     'access callback' => 'entity_access',
