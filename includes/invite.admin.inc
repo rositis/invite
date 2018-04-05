@@ -116,7 +116,7 @@ function invite_type_form_submit(&$form, &$form_state) {
  * @param $form_state
  */
 function invite_type_form_submit_delete(&$form, &$form_state) {
-  $form_state['redirect'] = 'admin/structure/invite-types/' . $form_state['invite_type']->type . '/delete';
+  $form_state['redirect'] = 'admin/structure/invite-types/manage/' . $form_state['invite_type']->type . '/delete';
 }
 
 /**
