@@ -32,7 +32,7 @@ function invite_notifications_init() {
       ':status' => 1,
     ))->fetchField();
 
-    if ($result == 0) {
+    if ($result == 0 && $account->data['notification_received']) {
       user_save($account, array('data' => array('notification_received' => FALSE)));
     }
   }
