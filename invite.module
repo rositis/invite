@@ -839,6 +839,13 @@ function invite_user_presave(&$edit, $account, $category) {
           $edit['roles'][$role] = $role;
         }
       }
+
+      if (!variable_get('invite_require_approval', FALSE)) {
+        $edit['status'] = 1;
+      }
+      else {
+        $edit['status'] = 0;
+      }
     }
   }
 }
