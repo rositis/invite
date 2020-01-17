@@ -9,15 +9,17 @@
  * Menu callback; display invite settings form.
  */
 function invite_settings() {
-  $permissions_url = url('admin/people/permissions', array('query' => drupal_get_destination(), 'fragment' => 'module-invite'));
+  $config = config('invite.settings');
+  $permissions_url = url('admin/people/permissions', array('query' => backdrop_get_destination(), 'fragment' => 'module-invite'));
 
   $roles = user_roles(FALSE, 'send invitations');
   if (count($roles) == 0) {
-    drupal_set_message(t('Please enable the <em>send invitations</em> permission for at least one role on the <a href="@url">permissions page</a>.', array('@url' => $permissions_url)), 'warning');
+    backdrop_set_message(t('Please enable the <em>send invitations</em> permission for at least one role on the <a href="@url">permissions page</a>.', array('@url' => $permissions_url)), 'warning');
   }
   $target_roles = user_roles(TRUE);
 
   // General settings.
+  $form['#config'] = 'invite.settings';
   $form['general'] = array(
     '#type' => 'fieldset',
     '#title' => t('General settings'),
@@ -28,7 +30,7 @@ function invite_settings() {
   $form['general']['invite_target_role_default'] = array(
     '#type' => 'select',
     '#title' => t('Default target role'),
-    '#default_value' => variable_get('invite_target_role_default', DRUPAL_AUTHENTICATED_RID),
+    '#default_value' => $config->get('invite_target_role_default'),
     '#options' => $target_roles,
     '#description' => t('Choose the default role that invited users will be added to when they register. For example, <em>authenticated user</em>.'),
     '#required' => TRUE,
@@ -36,8 +38,8 @@ function invite_settings() {
   $form['general']['invite_expiry'] = array(
     '#type' => 'select',
     '#title' => t('Invitation expiry'),
-    '#default_value' => variable_get('invite_expiry', 30),
-    '#options' => drupal_map_assoc(array(1, 3, 7, 14, 30, 60)),
+    '#default_value' => $config->get('invite_expiry'),
+    '#options' => backdrop_map_assoc(array(1, 3, 7, 14, 30, 60)),
     '#description' => t('Set the expiry period for user invitations, in days.'),
     '#multiple' => FALSE,
     '#required' => TRUE,
@@ -45,19 +47,19 @@ function invite_settings() {
   $form['general']['invite_registration_path'] = array(
     '#type' => 'textfield',
     '#title' => t('Path to registration page'),
-    '#default_value' => variable_get('invite_registration_path', 'user/register'),
+    '#default_value' => $config->get('invite_registration_path'),
     '#description' => t('Path to the registration page for invited users. Useful when using the <em>Assign from Path</em> option of <a href="@url">Auto Assign Roles</a> module.', array('@url' => 'http://drupal.org/project/autoassignrole')),
   );
   $form['general']['invite_require_approval'] = array(
     '#type' => 'checkbox',
     '#title' => t('Require administrator approval for invitees'),
-    '#default_value' => variable_get('invite_require_approval', FALSE),
+    '#default_value' => $config->get('invite_require_approval'),
     '#description' => t('Accounts that have been created with an invitation will require administrator approval.'),
   );
   $form['general']['invite_profile_inviter'] = array(
     '#type' => 'checkbox',
     '#title' => t('Show inviter on user profile'),
-    '#default_value' => variable_get('invite_profile_inviter', TRUE),
+    '#default_value' => $config->get('invite_profile_inviter'),
     '#description' => t('If this option is checked, the user profile page will show who invited the user.'),
   );
 
@@ -74,14 +76,14 @@ function invite_settings() {
   foreach ($roles as $rid => $role) {
     $form['role'][$rid] = array(
       '#type' => 'fieldset',
-      '#title' => t('@role settings', array('@role' => drupal_ucfirst($role))),
+      '#title' => t('@role settings', array('@role' => backdrop_ucfirst($role))),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
     $form['role'][$rid]['invite_target_role_' . $rid] = array(
       '#type' => 'select',
       '#title' => t('Target role'),
-      '#default_value' => variable_get('invite_target_role_' . $rid, DRUPAL_AUTHENTICATED_RID),
+      '#default_value' => $config->get('invite_target_role_' . $rid),
       '#options' => $target_roles,
       '#description' => t('You may choose to add invited users to another role (in addition to the default role set in the general section) when they have been invited by a member of %role.', array('%role' => $role)),
       '#required' => TRUE,
@@ -89,8 +91,17 @@ function invite_settings() {
     $form['role'][$rid]['invite_maxnum_' . $rid] = array(
       '#type' => 'select',
       '#title' => t('Invitation limit'),
-      '#default_value' => variable_get('invite_maxnum_' . $rid, INVITE_UNLIMITED),
-      '#options' => array(5 => 5, 10 => 10, 20 => 20, 50 => 50, 100 => 100, 500 => 500, 1000 => 1000, INVITE_UNLIMITED => t('unlimited')),
+      '#default_value' => $config->get('invite_maxnum_' . $rid),
+      '#options' => array(
+        5 => 5,
+        10 => 10,
+        20 => 20,
+        50 => 50,
+        100 => 100,
+        500 => 500,
+        1000 => 1000,
+        INVITE_UNLIMITED => t('unlimited'),
+      ),
       '#description' => t('Allows to limit the total number of invitations members of %role can send.', array('%role' => $role)),
       '#multiple' => FALSE,
       '#required' => TRUE,
@@ -108,7 +119,7 @@ function invite_settings() {
   $form['email']['invite_subject'] = array(
     '#type' => 'textfield',
     '#title' => t('Subject'),
-    '#default_value' => variable_get('invite_subject', t('[invite:inviter-raw] has sent you an invite!')),
+    '#default_value' => $config->get('invite_subject'),
     '#description' => t('Type the default subject of the invitation e-mail.') . ' ' . t('Use the syntax [token] if you want to insert a replacement pattern.'),
     '#required' => TRUE,
   );
@@ -116,7 +127,7 @@ function invite_settings() {
     '#type' => 'checkbox',
     '#title' => t('Editable subject'),
     '#description' => t('Choose whether users should be able to customize the subject.'),
-    '#default_value' => variable_get('invite_subject_editable', FALSE),
+    '#default_value' => $config->get('invite_subject_editable'),
   );
   $form['email']['invite_default_mail_template'] = array(
     '#type' => 'textarea',
@@ -129,7 +140,7 @@ function invite_settings() {
     '#type' => 'checkbox',
     '#title' => t('Editable mail template'),
     '#description' => t('Choose whether users should be able to edit the mail template or just enter a message that can then be embedded as a token. If this option is unchecked, be sure to include [invite:invite-message] in the mail template.'),
-    '#default_value' => variable_get('invite_mail_template_editable', TRUE),
+    '#default_value' => $config->get('invite_mail_template_editable'),
   );
   $form['email']['token_help'] = array(
     '#title' => t('Replacement patterns'),
@@ -145,14 +156,14 @@ function invite_settings() {
     '#title' => t('<em>From</em> e-mail address'),
     '#description' => t('Choose which e-mail address will be in the From: header for the invitation mails sent; <em>site</em> or <em>inviter</em>. <em>Site</em> will use the default e-mail address of the site, whereas <em>inviter</em> will use the e-mail address of the user who is sending the invitation. Alternatively, you can set this value manually by clicking on <em>advanced settings</em> below.'),
     '#options' => array(t('Site'), t('Inviter')),
-    '#default_value' => variable_get('invite_use_users_email', 0),
+    '#default_value' => $config->get('invite_use_users_email'),
   );
   $form['email']['invite_use_users_email_replyto'] = array(
     '#type' => 'radios',
     '#title' => t('<em>Reply-To</em> e-mail address'),
     '#description' => t('Choose which e-mail address will be in the Reply-To: header for the invitation mails sent; <em>site</em> or <em>inviter</em>. <em>Site</em> will use the default e-mail address of the site, whereas <em>inviter</em> will use the e-mail address of the user who is sending the invitation. Alternatively, you can set this value manually by clicking on <em>advanced settings</em> below.'),
     '#options' => array(t('Site'), t('Inviter')),
-    '#default_value' => variable_get('invite_use_users_email_replyto', 0),
+    '#default_value' => $config->get('invite_use_users_email_replyto'),
   );
   $form['email']['advanced'] = array(
     '#type' => 'fieldset',
@@ -164,13 +175,13 @@ function invite_settings() {
   $form['email']['advanced']['invite_manual_from'] = array(
     '#type' => 'textfield',
     '#title' => t('Manually override <em>From</em> e-mail address'),
-    '#default_value' => variable_get('invite_manual_from', ''),
+    '#default_value' => $config->get('invite_manual_from'),
     '#description' => t('The e-mail address the invitation e-mail is sent from.'),
   );
   $form['email']['advanced']['invite_manual_reply_to'] = array(
     '#type' => 'textfield',
     '#title' => t('Manually override <em>Reply-To</em> e-mail address'),
-    '#default_value' => variable_get('invite_manual_reply_to', ''),
+    '#default_value' => $config->get('invite_manual_reply_to'),
     '#description' => t('The e-mail address you want recipients to reply to.'),
   );
 
@@ -185,7 +196,7 @@ function invite_settings() {
   $form['custom']['invite_page_title'] = array(
     '#type' => 'textfield',
     '#title' => t('Invite page title'),
-    '#default_value' => variable_get('invite_page_title', t('Invite a friend')),
+    '#default_value' => $config->get('invite_page_title'),
     '#description' => t('The title of the page where users invite friends.'),
     '#required' => TRUE,
   );
@@ -201,8 +212,15 @@ function invite_settings() {
  */
 function invite_admin_overview() {
   $header = array(
-    array('data' => t('Username'), 'field' => 'u1.name', 'sort' => 'asc'),
-    array('data' => t('Total'), 'field' => 'invites'),
+    array(
+      'data' => t('Username'),
+      'field' => 'u1.name',
+      'sort' => 'asc',
+    ),
+    array(
+      'data' => t('Total'),
+      'field' => 'invites',
+    ),
     t('Successful'),
     t('Pending'),
     t('Expired'),
@@ -244,7 +262,7 @@ function invite_admin_overview() {
   $result->orderByHeader($header);
   $result = $result->execute()->fetchAll();
 
-  $invite_admin_filter_form = drupal_get_form('invite_admin_filter_form');
+  $invite_admin_filter_form = backdrop_get_form('invite_admin_filter_form');
   $output = render($invite_admin_filter_form);
 
   $rows = array();
@@ -298,6 +316,10 @@ function invite_admin_filter_form() {
   return $form;
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function invite_admin_filter_form_submit($form, &$form_state) {
   if (!empty($form_state['values']['filter'])) {
     $_SESSION[INVITE_ADMIN_SESSION] = $form_state['values']['filter'];
@@ -315,11 +337,27 @@ function invite_admin_filter_form_submit($form, &$form_state) {
  */
 function invite_admin_details($account) {
   $header = array(
-    array('data' => t('E-mail'), 'field' => 'i.email', 'sort' => 'asc'),
-    array('data' => t('Username'), 'field' => 'u.name'),
-    array('data' => t('Created'), 'field' => 'i.created'),
-    array('data' => t('Expires'), 'field' => 'i.expiry'),
-    array('data' => t('Status'), 'field' => 'i.canceled'),
+    array(
+      'data' => t('E-mail'),
+      'field' => 'i.email',
+      'sort' => 'asc',
+    ),
+    array(
+      'data' => t('Username'),
+      'field' => 'u.name',
+    ),
+    array(
+      'data' => t('Created'),
+      'field' => 'i.created',
+    ),
+    array(
+      'data' => t('Expires'),
+      'field' => 'i.expiry',
+    ),
+    array(
+      'data' => t('Status'),
+      'field' => 'i.canceled',
+    ),
   );
 
   $result = db_select('invite', 'i')
@@ -333,7 +371,7 @@ function invite_admin_details($account) {
   if (isset($_GET['filter']) && $_GET['filter'] != '') {
     $result->where("LOWER(u.name) LIKE CONCAT('%', LOWER(:name), '%')", array(':name' => $_GET['filter']));
 
-    $output .= render(drupal_get_form('invite_admin_details_filter_form', $account->uid, $_GET['filter']));
+    $output .= render(backdrop_get_form('invite_admin_details_filter_form', $account->uid, $_GET['filter']));
   }
 
   $result = $result->orderByHeader($header)
@@ -386,6 +424,10 @@ function invite_sort_by_status($a, $b) {
   return $status_a < $status_b ? -1 : ($status_a > $status_b ? 1 : 0);
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function invite_admin_details_filter_form($form, &$form_state, $uid, $filter) {
   $form['#action'] = "/admin/config/people/invite/details/$uid";
   $form['filter'] = array(

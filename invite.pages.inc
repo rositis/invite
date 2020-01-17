@@ -14,8 +14,8 @@
 function invite_user_overview($page, $account) {
   global $user;
 
-  drupal_add_css(drupal_get_path('module', 'invite') . '/css/invite.css');
-  drupal_add_js(drupal_get_path('module', 'invite') . '/js/invite.js');
+  backdrop_add_css(backdrop_get_path('module', 'invite') . '/css/invite.css');
+  backdrop_add_js(backdrop_get_path('module', 'invite') . '/js/invite.js');
 
   $rows = array();
   $profile_access = user_access('access user profiles');
@@ -30,8 +30,8 @@ function invite_user_overview($page, $account) {
 
   switch ($page) {
     case 'accepted':
-    // @TODO: I believe that if default is at the top it will always be
-    // defaulted to and the other cases will never be hit.
+      // @TODO: I believe that if default is at the top it will always be
+      // defaulted to and the other cases will never be hit.
     default:
       $query->leftJoin('users', 'u', 'u.uid = i.invitee AND u.uid <> 0');
       $query->fields('u', array('uid', 'status'));
@@ -70,7 +70,7 @@ function invite_user_overview($page, $account) {
           $row[] = check_plain($invite->email);
         }
         $row[] = $account_exists ? t('Accepted') : t('Deleted');
-        $row[] = $allow_accepted_delete ? l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => drupal_get_destination())) : '';
+        $row[] = $allow_accepted_delete ? l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => backdrop_get_destination())) : '';
         break;
 
       case 'pending':
@@ -82,7 +82,7 @@ function invite_user_overview($page, $account) {
 
         $operations = array();
         if ($allow_delete) {
-          $operations[] = l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => drupal_get_destination()));
+          $operations[] = l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => backdrop_get_destination()));
         }
         if ($expired && $account->uid == $user->uid) {
           $operations[] = l(t('resend'), "invite/resend/$invite->reg_code");
@@ -113,25 +113,25 @@ function invite_accept($invite) {
 
   if (!$user->uid && $status == INVITE_VALID) {
     $_SESSION[INVITE_SESSION] = $invite->reg_code;
-    drupal_goto(variable_get('invite_registration_path', 'user/register'));
+    backdrop_goto(config_get('invite.settings', 'invite_registration_path'));
   }
   else {
     switch ($status) {
       case INVITE_WITHDRAWN:
-        drupal_set_message(t('This invitation has been withdrawn.'));
+        backdrop_set_message(t('This invitation has been withdrawn.'));
         break;
 
       case INVITE_USED:
-        drupal_set_message(t('This invitation has already been used.'), 'error');
+        backdrop_set_message(t('This invitation has already been used.'), 'error');
         break;
 
       case INVITE_EXPIRED:
-        drupal_set_message(t('This invitation has expired.'));
+        backdrop_set_message(t('This invitation has expired.'));
         break;
     }
   }
 
-  drupal_goto();
+  backdrop_goto();
 }
 
 /**
@@ -145,7 +145,7 @@ function invite_resend($invite) {
 
   // Inviter must match current user and invitation must have expired.
   if ($invite->uid == $user->uid && $invite->expiry < REQUEST_TIME && $invite->joined == 0 && $invite->canceled == 0) {
-    return drupal_get_form('invite_form', 'page', $invite);
+    return backdrop_get_form('invite_form', 'page', $invite);
   }
 
   return MENU_ACCESS_DENIED;
@@ -200,9 +200,9 @@ function invite_user_autocomplete($string = '') {
     	->range(0, 10)
       ->execute();
     foreach ($result as $account) {
-      $matches[$account->name] = check_plain($account->name.' ('.$account->mail.')');
+      $matches[$account->name] = check_plain($account->name . ' (' . $account->mail . ')');
     }
   }
 
-  drupal_json_output($matches);
+  backdrop_json_output($matches);
 }

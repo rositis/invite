@@ -4,7 +4,7 @@
  */
 (function ($) {
 
-Drupal.behaviors.invite_user = {
+Backdrop.behaviors.invite_user = {
   attach: function (context) {
     $('#invite-user-overview .invite-reg-link').click(function(e) {
       $('#invite-reg-link-container #invite-reg-title').html($(this).attr('title') + ':');

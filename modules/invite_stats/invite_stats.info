@@ -1,6 +1,6 @@
 name = Invite Statistics
 description = "Displays some statistics about sent invitations."
-core = 7.x
+backdrop = 1.x
+type = module
 package = Invite
 dependencies[] = invite
-files[] = invite_stats.module
