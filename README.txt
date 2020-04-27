@@ -1,6 +1,6 @@
 CONTENTS OF THIS FILE
 ---------------------
-   
+
  * Introduction
  * Requirements
  * Installation
@@ -31,7 +31,7 @@ INSTALLATION
     https://drupal.org/documentation/install/modules-themes/modules-7 for
     further information.
 
-  * Enable the invite and invite_by_email modules. 
+  * Enable the invite and invite_by_email modules.
   * Navigate Structure » Invite types » Add Invite type and add an invite type.
   * Navigate Structure » Blocks and place the invite type block that you
     named.
@@ -46,7 +46,6 @@ CONFIGURATION
 
 MAINTAINERS
 -----------
-
 Current maintainers:
  * Stefan Kudwien (smk-ka) - https://www.drupal.org/user/48898
  * Andy Kirkham (AjK) - https://www.drupal.org/user/39030
@@ -63,3 +62,8 @@ Current maintainers:
  * Robert Douglass (robertDouglass) - https://www.drupal.org/user/5449
  * Tim Bozeman - https://www.drupal.org/user/2241356
  * Wolfgang Ziegler (fago) - https://www.drupal.org/user/16747
+
+ BACKDROP PORT
+ -----------
+  * Ryan Osītis (rositis) - https://www.drupal.org/user/834332
+

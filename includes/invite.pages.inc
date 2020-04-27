@@ -12,7 +12,7 @@
  * @return bool
  */
 function invite_view($invite) {
-  drupal_set_title(entity_label('invite', $invite));
+  backdrop_set_title(entity_label('invite', $invite));
   return entity_view('invite', array(entity_id('invite', $invite) => $invite), 'full');
 }
 
@@ -82,12 +82,12 @@ function invite_accept($invite) {
     'type' => &$type,
     'invite' => $invite,
   );
-  drupal_alter('invite_accept', $data);
+  backdrop_alter('invite_accept', $data);
 
   if (!empty($message)) {
-    drupal_set_message($message, $type);
+    backdrop_set_message($message, $type);
   }
-  drupal_redirect_form($data);
+  backdrop_redirect_form($data);
 }
 
 /**
@@ -101,7 +101,7 @@ function invite_accept($invite) {
  */
 function invite_resend($invite) {
   if ($invite->sendInvite()) {
-    drupal_set_message(t('Invitation has been successfully resent.'));
+    backdrop_set_message(t('Invitation has been successfully resent.'));
 
     return array(
       'invite' => entity_view('invite', array(entity_id('invite', $invite) => $invite), 'full'),

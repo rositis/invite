@@ -1,0 +1,5 @@
+[InviteTestCase]
+name = Invite expire
+description = Tests the invite expire time
+group = Invite
+file = InviteExpireTest.test

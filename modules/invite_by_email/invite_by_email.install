@@ -16,17 +16,6 @@ function invite_by_email_install() {
  * Implements hook_enable().
  */
 function invite_by_email_enable() {
-  //@codingStandardsIgnoreLine.
-  variable_set('invite_default_mail_body', t(<<<TEMPLATE
-[invite:inviter:name] has invited you to join [site:name] at [site:url].
-
-To become a member of [site:name], click the link below or paste it into the address bar of your browser.
-
-[invite:invite-accept-link]
-TEMPLATE
-  ));
-
-  variable_set('invite_default_mail_subject', t('[invite:inviter:name] has sent you an invite!'));
 
   $types = array(
     array(
@@ -46,19 +35,12 @@ TEMPLATE
       $invite_type = entity_create('invite_type', $type);
       if ($invite_type) {
         $invite_type->invite_sending_controller = $type['invite_sending_controller'];
-        invite_type_save($invite_type);
+        entity_plus_save('invite_type', $invite_type);
       }
     }
   }
 }
 
-/**
- * Implements hook_disable().
- */
-function invite_by_email_disable() {
-  variable_del('invite_default_mail_body');
-  variable_del('invite_default_mail_subject');
-}
 
 /**
  * Implements hook_uninstall().
@@ -88,13 +70,15 @@ function invite_by_email_uninstall() {
     ->condition('bundle', 'invite_by_email')
     ->execute();
 
-  drupal_cron_run();
+  backdrop_cron_run();
 }
 
 /**
  * Add fields.
  */
 function invite_by_email_add_fields() {
+  // Get the full config object
+  $config = config('invite_by_email.settings');
   $fields = array(
     'field_invitation_email_address' => array(
       'definition' => array(
@@ -134,7 +118,7 @@ function invite_by_email_add_fields() {
         'description' => t('Enter e-mail subject.'),
         'default_value' => array(
           array(
-            'value' => variable_get('invite_default_mail_subject', ''),
+            'value' => $config->get('invite_default_mail_subject'),
           ),
         ),
         'widget' => array(
@@ -167,7 +151,7 @@ function invite_by_email_add_fields() {
         'description' => t('Enter e-mail body.'),
         'default_value' => array(
           array(
-            'value' => variable_get('invite_default_mail_body', ''),
+            'value' => $config->get('invite_default_mail_body'),
           ),
         ),
         'widget' => array(
@@ -191,43 +175,56 @@ function invite_by_email_add_fields() {
   foreach ($fields as $field) {
     $info = field_read_field(array('field_name' => $field['definition']['field_name']));
     if (empty($info)) {
-      field_create_field($field['definition']);
+      try {
+        field_create_field($field['definition']);
+      }
+      catch (Exception $e) {
+        watchdog('invite_by_email', $e->getMessage());
+      }
     }
 
     // Ensure that field wasn't added previously.
     $prior_instance = field_read_instance($field['instance']['entity_type'], $field['instance']['field_name'], $field['instance']['bundle']);
     if (!$prior_instance) {
-      field_create_instance($field['instance']);
+      try {
+        field_create_instance($field['instance']);
+      }
+      catch (Exception $e) {
+        watchdog('invite_by_email', $e->getMessage());
+      }
     }
   }
 }
 
 /**
- * Implements hook_update_N().
- *
- * Create field_invitation_email_address, field_invitation_email_subject,
- * and field_invitation_email_body exist if they don't already exist.
+ * Move Invite settings from variables to config.
  */
-function invite_by_email_update_7001(&$sandbox) {
-  invite_by_email_add_fields();
+function invite_by_email_update_1000() {
+  // Migrate variables to config.
+  $config = config('invite_by_email.settings');
+
+  $config->set('invite_default_mail_subject', update_variable_get('invite_default_mail_subject', '[invite:inviter:name] has sent you an invite!'));
+  $config->set('invite_default_mail_body', update_variable_get('invite_default_mail_body', '[invite:inviter:name] has invited you to join [site:name] at [site:url].\n\nTo become a member of [site:name], click the link below or paste it into the address bar of your browser.\n\n[invite:invite-accept-link]'));
+  $config->set('invite_default_replace_tokens', update_variable_get('invite_default_replace_tokens', 1));
+  $config->set('invite_use_users_email', update_variable_get('invite_use_users_email', 0));
+  $config->set('invite_use_users_email_replyto', update_variable_get('invite_use_users_email_replyto', ''));
+  $config->set('invite_manual_from', update_variable_get('invite_manual_from', ''));
+  $config->set('invite_manual_reply_to', update_variable_get('invite_manual_reply_to', ''));
+  $config->save();
+
+  // Delete variables.
+  update_variable_del('invite_default_mail_subject');
+  update_variable_del('invite_default_mail_body');
+  update_variable_del('invite_default_replace_tokens');
+  update_variable_del('invite_use_users_email');
+  update_variable_del('invite_use_users_email_replyto');
+  update_variable_del('invite_manual_from');
+  update_variable_del('invite_manual_reply_to');
 }
 
 /**
- * Implements hook_update_N().
- *
- * Update field instance info for email subject and body if empty set default
- * value.
+ * Implements hook_update_last_removed().
  */
-function invite_by_email_update_7002(&$sandbox) {
-  $instance_info = field_info_instance('invite', 'field_invitation_email_subject', 'invite_by_email');
-  if (empty($instance_info['default_value'][0]['value'])) {
-    $instance_info['default_value'][0]['value'] = variable_get('invite_default_mail_subject', '');
-  }
-  field_update_instance($instance_info);
-
-  $instance_info = field_info_instance('invite', 'field_invitation_email_body', 'invite_by_email');
-  if (empty($instance_info['default_value'][0]['value'])) {
-    $instance_info['default_value'][0]['value'] = variable_get('invite_default_mail_body', '');
-  }
-  field_update_instance($instance_info);
+function invite_by_email_update_last_removed() {
+  return 7002;
 }

@@ -1,0 +1,14 @@
+{
+    "_config_name": "invite.settings",
+    "invite_default_expiry_time": 30,
+    "invite_message_editable": "",
+    "invite_default_mail_subject": "",
+    "invite_default_mail_body": "",
+    "invite_default_replace_tokens": "",
+    "invite_use_users_email_replyto": "",
+    "invite_manual_from": "",
+    "invite_use_users_email": "",
+    "invite_version_updated": 1,
+    "user_register": 2,
+    "invite_require_approval": 0
+}

@@ -258,7 +258,7 @@ function invite_menu() {
     'file' => 'includes/invite.pages.inc',
   );
 
-  if (variable_get('invite_version_updated', TRUE)) {
+  if (config_get('invite.settings','invite_version_updated')) {
     $items['admin/config/people/invite/migrate'] = array(
       'title' => 'Migrate',
       'description' => 'Migrate version 2.x invites.',
@@ -289,7 +289,7 @@ function invite_menu() {
  *
  * @param array $form
  *   Array with form.
- * @param aray $form_state
+ * @param array $form_state
  *   Array with form state.
  * @param string $form_id
  *   The ID of form.
@@ -319,7 +319,11 @@ function invite_menu_alter(&$items) {
  * Determine if user registration mode is set to invite only.
  */
 function invite_user_registration_by_invite_only() {
-  return (variable_get('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) == USER_REGISTER_INVITATION_ONLY);
+  /* The default for the user_register setting is actually the Backdrop constant
+   * USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL, which is defined as the
+   * value 2.
+  */
+  return (config_get('invite.settings','user_register') == USER_REGISTER_INVITATION_ONLY);
 }
 
 /**
@@ -617,7 +621,7 @@ function invite_load_multiple($iids, $conditions = array(), $reset = FALSE) {
  * @return bool
  */
 function invite_save($invite) {
-  return entity_save('invite', $invite);
+  return entity_plus_save('invite', $invite);
 }
 
 /**
@@ -626,7 +630,13 @@ function invite_save($invite) {
  * @param Invite $invite
  */
 function invite_delete($invite) {
-  entity_delete('invite', entity_id('invite', $invite));
+  /* TODO: Double check that this works correctly. There currently is no
+   * entity_delete() function in Backdrop.
+  */
+  // Maybe just use entity_delete_multiple with a single element array? Hmm.
+  // $id = entity_plus_id('invite', $invite);
+  $invite->delete();
+  //  entity_delete('invite', );
 }
 
 /**
@@ -646,12 +656,12 @@ function invite_delete_multiple($invite_ids) {
 function invite_invite_insert($entity) {
   if ($entity->sendInvite()) {
     if ($entity->sendNotification) {
-      drupal_set_message(t('Invitation has been sent.'));
+      backdrop_set_message(t('Invitation has been sent.'));
     }
   }
   else {
     if ($entity->sendNotification) {
-      drupal_set_message(t('Failed to send a message.'), 'error');
+      backdrop_set_message(t('Failed to send a message.'), 'error');
     }
   }
 }
@@ -718,7 +728,7 @@ function invite_get_types($type_name = NULL) {
  * @param InviteType $invite_type
  */
 function invite_type_save($invite_type) {
-  entity_save('invite_type', $invite_type);
+  entity_plus_save('invite_type', $invite_type);
 }
 
 /**
@@ -727,7 +737,9 @@ function invite_type_save($invite_type) {
  * @param InviteType $invite_type
  */
 function invite_type_delete($invite_type) {
-  entity_delete('invite_type', entity_id('invite_type', $invite_type));
+  // TODO: CHECK THIS AS ABOVE.
+  $invite_type->delete();
+  // entity_delete('invite_type', entity_id('invite_type', $invite_type));
 }
 
 /**
@@ -782,7 +794,7 @@ function invite_user_login($edit, $account) {
     $invite->invitee = $account->uid;
     $invite->joined = REQUEST_TIME;
     $invite->status = INVITE_USED;
-    entity_save('invite', $invite);
+    entity_plus_save('invite', $invite);
 
     if (isset($_SESSION)) {
       unset($_SESSION[INVITE_SESSION_CODE]);
@@ -799,7 +811,7 @@ function invite_user_insert(&$edit, $account, $category) {
     $invite->invitee = $account->uid;
     $invite->joined = REQUEST_TIME;
     $invite->status = INVITE_USED;
-    entity_save('invite', $invite);
+    entity_plus_save('invite', $invite);
 
     if (isset($_SESSION)) {
       unset($_SESSION[INVITE_SESSION_CODE]);
@@ -840,7 +852,7 @@ function invite_user_presave(&$edit, $account, $category) {
         }
       }
 
-      if (!variable_get('invite_require_approval', FALSE)) {
+      if (!config_get('invite.settings','invite_require_approval')) {
         $edit['status'] = 1;
       }
       else {
@@ -874,13 +886,14 @@ function invite_target_roles($invite, $account) {
 
   // Map to configured target roles.
   foreach ($roles as $rid => $role) {
+    // TODO: WTF? How am I supposed to do this in the settings file?
     $target = variable_get('invite_target_role_' . $rid, DRUPAL_AUTHENTICATED_RID);
     if ($target != DRUPAL_AUTHENTICATED_RID) {
       $targets[$target] = $target;
     }
   }
 
-  drupal_alter('invite_target_roles', $targets, $invite, $account);
+  backdrop_alter('invite_target_roles', $targets, $invite, $account);
 
   return $targets;
 }
@@ -901,7 +914,35 @@ function invite_cron() {
     $invites = entity_load('invite', array_keys($results['invite']));
     foreach ($invites as $invite) {
       $invite->status = INVITE_EXPIRED;
-      entity_save('invite', $invite);
+      entity_plus_save('invite', $invite);
     }
   }
+}
+
+/**
+ * Implements hook_autoload_info().
+ *
+ * @return array
+ */
+function invite_autoload_info() {
+  return array(
+    'InviteController' => 'includes/invite.controller.inc',
+    'InviteTypeController' => 'includes/invite.controller.inc',
+    'InviteTypeUIController' => 'includes/invite.controller.inc',
+    'Invite' => 'includes/invite.controller.inc',
+    'InviteType' => 'includes/invite.controller.inc',
+    'InviteMetadataController' => 'includes/invite.info.inc',
+    'InviteExpireTest' => 'tests/InviteExpireTest.test',
+  );
+}
+
+/**
+ * Implements hook_config_info().
+ */
+function invite_config_info() {
+  $prefixes['invite.settings'] = array(
+    'label' => t('Invite module settings'),
+    'group' => t('Invite'),
+  );
+  return $prefixes;
 }

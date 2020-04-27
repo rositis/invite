@@ -1,7 +1,9 @@
+type = module
 name = Invite by e-mail
 description = Allow users invite other using e-mail
-core = 7.x
+version = VERSION
 package = Invite
+backdrop = 1.x
 
 configure = admin/config/people/invite/by_mail
 

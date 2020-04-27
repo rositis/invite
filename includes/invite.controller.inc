@@ -7,8 +7,7 @@
 /**
  *
  */
-class InviteController extends EntityAPIController {
-
+class InviteController extends EntityPlusController {
   /**
    *
    */
@@ -16,7 +15,7 @@ class InviteController extends EntityAPIController {
     global $user;
     $values += array(
       'created' => REQUEST_TIME,
-      'expiry' => REQUEST_TIME + variable_get('invite_default_expiry_time', 30) * 24 * 60 * 60,
+      'expiry' => REQUEST_TIME + config_get('invite.settings','invite_default_expiry_time') * 24 * 60 * 60,
       'uid' => $user->uid,
       'invitee' => 0,
       'status' => 1,
@@ -35,10 +34,17 @@ class InviteController extends EntityAPIController {
    */
   public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
     $account = user_load($entity->uid);
+    try {
+      $formatted_user = theme('username', array('account' => $account));
+    }
+    catch (Exception $e) {
+      $formatted_user = $account->username;
+      watchdog('invite', $e->getMessage());
+    }
     $content['author'] = array(
       '#prefix' => '<div>',
       '#suffix' => '</div>',
-      '#markup' => t('Created by: <strong>!author</strong>', array('!author' => theme('username', array('account' => $account)))),
+      '#markup' => t('Created by: <strong>!author</strong>', array('!author' => $formatted_user)),
     );
     $content['status'] = array(
       '#prefix' => '<div>',
@@ -53,7 +59,7 @@ class InviteController extends EntityAPIController {
 /**
  *
  */
-class InviteTypeController extends EntityAPIControllerExportable {
+class InviteTypeController extends EntityPlusControllerExportable {
 
   /**
    *
@@ -72,10 +78,12 @@ class InviteTypeController extends EntityAPIControllerExportable {
    */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
     parent::save($entity, $transaction);
-    // Rebuild menu registry. We do not call menu_rebuild directly, but set
-    // variable that indicates rebuild in the end.
-    // @see _http://drupal.org/node/1399618
-    variable_set('menu_rebuild_needed', TRUE);
+    /*
+     * Rebuild menu registry. We do not call menu_rebuild directly, but set
+     * variable that indicates rebuild in the end.
+     * @see _http://drupal.org/node/1399618
+     */
+    state_set('menu_rebuild_needed', TRUE);
   }
 
 }
@@ -83,6 +91,7 @@ class InviteTypeController extends EntityAPIControllerExportable {
 /**
  * UI controller for Task Type.
  */
+
 class InviteTypeUIController extends EntityDefaultUIController {
 
   /**
@@ -98,8 +107,42 @@ class InviteTypeUIController extends EntityDefaultUIController {
 
 /**
  * Invite class.
+ *
+ * A subclass of Entity is a requirement for creating a custom entity. It is
+ * also a minimum requirement to define the methods included here, even as
+ * empty functions.
  */
 class Invite extends Entity {
+
+  /**
+   * Implements EntityInterface::id().
+   */
+  public function id() {
+    return isset($this->id) ? $this->id : NULL;
+  }
+
+  /**
+   * Implements EntityInterface::entityType().
+   */
+  public function entityType() {
+    return 'rules_config';
+  }
+
+  /**
+   * Implements EntityInterface::bundle().
+   */
+  public function bundle() {}
+
+  /**
+   * Implements EntityInterface::label().
+   */
+  public function label() {}
+
+  /**
+   * Implements EntityInterface::uri().
+   */
+  public function uri() {}
+
   /**
    * The user id of the profile owner.
    *
@@ -182,7 +225,7 @@ class Invite extends Entity {
     }
     $this->sendNotification = TRUE;
 
-    parent::__construct($values, 'invite');
+    parent::__construct($values, 'invite'); //  TODO: Investigate.
   }
 
   /**
@@ -199,14 +242,14 @@ class Invite extends Entity {
    */
   protected function defaultLabel() {
     $entity = entity_metadata_wrapper('invite', $this);
-    return t('Invitation #@number', array('@number' => $this->identifier()));
+    return t('Invitation #@number', array('@number' => $this->id()));
   }
 
   /**
    *
    */
   protected function defaultUri() {
-    return array('path' => 'invite/' . $this->identifier());
+    return array('path' => 'invite/' . $this->id());
   }
 
   /**
@@ -225,6 +268,35 @@ class InviteType extends Entity {
   public $type;
   public $label;
   public $weight = 0;
+
+  /**
+   * Implements EntityInterface::id().
+   */
+  public function id() {
+    return isset($this->id) ? $this->id : NULL;
+  }
+
+  /**
+   * Implements EntityInterface::entityType().
+   */
+  public function entityType() {
+    return 'rules_config';
+  }
+
+  /**
+   * Implements EntityInterface::bundle().
+   */
+  public function bundle() {}
+
+  /**
+   * Implements EntityInterface::label().
+   */
+  public function label() {}
+
+  /**
+   * Implements EntityInterface::uri().
+   */
+  public function uri() {}
 
   /**
    * Array with the argument keys.
@@ -292,13 +364,18 @@ class InviteType extends Entity {
       $module = !empty($this->module) ? $this->module : '';
       if (!in_array($controller_name, $controllers)) {
         $controllers[] = $controller_name;
-        db_insert('invite_sending_controller')
+        $record = db_insert('invite_sending_controller')
           ->fields(array(
             'type' => $this->type,
             'module' => $module,
             'name' => $controller_name,
-          ))
-          ->execute();
+          ));
+        try {
+          $record->execute();
+        }
+        catch(Exception $e) {
+          watchdog('invite', $e->getMessage());
+        }
       }
     }
   }

@@ -25,7 +25,7 @@ function invite_notifications_init() {
       ->execute()
       ->fetchAll();
     foreach ($result as $row) {
-      drupal_set_message(invite_notifications_get_message($row->message_type, $row), 'status', FALSE);
+      backdrop_set_message(invite_notifications_get_message($row->message_type, $row), 'status', FALSE);
     }
     $result = db_query('SELECT count(*) FROM {invite_notifications} WHERE uid = :uid and status = :status', array(
       ':uid' => $account->uid,
@@ -33,7 +33,8 @@ function invite_notifications_init() {
     ))->fetchField();
 
     if ($result == 0 && $account->data['notification_received']) {
-      user_save($account, array('data' => array('notification_received' => FALSE)));
+      $account->data['notification_received'] = FALSE;
+      $account->save();
     }
   }
 }
@@ -62,8 +63,14 @@ function invite_notifications_get_message($message_type, $params) {
   $result = FALSE;
   switch ($message_type) {
     case 'inviter_notification':
+      try {
+        $invitee_user = theme('username', array('account' => $invitee));
+      }
+      catch (Exception $e) {
+        watchdog('invite_notifications', $e->getMessage());
+      }
       $result = t('!user (@email) has joined!', array(
-        '!user' => theme('username', array('account' => $invitee)),
+        '!user' => $invitee_user,
         '@email' => $invitee->mail,
       ));
       db_update('invite_notifications')
@@ -75,8 +82,14 @@ function invite_notifications_get_message($message_type, $params) {
       break;
 
     case 'registered_user_notification':
+      try {
+        $inviter_user = theme('username', array('account' => $inviter));
+      }
+      catch (Exception $e) {
+        watchdog('invite_notifications', $e->getMessage());
+      }
       $result = t('!user has sent you invitation. You could !accept or !withdrawn it.', array(
-        '!user' => theme('username', array('account' => $inviter)),
+        '!user' => $inviter_user,
         '@email' => $invitee->mail,
         '!accept' => l(t('accept'), 'invite/accept/' . $invitation->reg_code),
         '!withdrawn' => l(t('withdraw'), 'invite/withdraw/' . $invitation->reg_code),
@@ -114,11 +127,17 @@ function theme_invite_registered_user_notification($variables) {
   $message = $variables['message'];
   $invitee = user_load($message->inviter);
   $invitation = invite_load($message->iid);
+  try {
+    $invitee_user = theme('username', array('account' => $invitee));
+  }
+  catch (Exception $e) {
+    watchdog('invite_notifications', $e->getMessage());
+  }
   return array(
     'message' => array(
       '#type' => 'markup',
       '#markup' => t('!user has sent you invitation. You could !accept or !withdrawn it.', array(
-        '!user' => theme('username', array('account' => $invitee)),
+        '!user' => $invitee_user,
         '@email' => $invitee->mail,
         '!accept' => l(t('accept'), 'invite/accept/' . $invitation->reg_code),
         '!withdrawn' => l(t('accept'), 'invite/withdraw/' . $invitation->reg_code),
@@ -141,12 +160,14 @@ function invite_notifications_invite_accept($invite) {
 
   // Flag the inviting user, this triggers status notifications and
   // saves us some queries otherwise.
-  if (drupal_write_record('invite_notifications', $message) == SAVED_NEW) {
+  if (backdrop_write_record('invite_notifications', $message) == SAVED_NEW) {
     $inviter = user_load($invite->uid);
-    user_save($inviter, array('data' => array('notification_received' => TRUE)));
+    $inviter->date['notification_received'] = TRUE;
+    $inviter->save();
 
     $invitee = user_load($invite->invitee);
-    user_save($invitee, array('data' => array('notification_received' => FALSE)));
+    $invitee->data['notification_received'] = FALSE;
+    $invitee->save();
     db_update('invite_notifications')
       ->fields(array(
         'status' => 0,
@@ -172,8 +193,10 @@ function invite_notifications_entity_insert($invite, $type) {
 
     // Flag the inviting user, this triggers status notifications and
     // saves us some queries otherwise.
-    if (drupal_write_record('invite_notifications', $message) == SAVED_NEW) {
-      user_save($invite->invitee(), array('data' => array('notification_received' => TRUE)));
+    if (backdrop_write_record('invite_notifications', $message) == SAVED_NEW) {
+      $invitee = user_load($invite->invitee);
+      $invitee->data['notification_received'] = TRUE;
+      $invitee->save();
     }
   }
 }
@@ -202,7 +225,8 @@ function invite_notifications_invite_withdraw($invite) {
     $user = user_load($uid);
 
     if (!_invite_notifications_user_messages($user)) {
-      user_save($user, array('data' => array('notification_received' => FALSE)));
+      $user->data['notification_received'] = FALSE;
+      $user->save();
     }
   }
 }

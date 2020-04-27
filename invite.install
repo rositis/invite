@@ -127,7 +127,22 @@ function invite_schema() {
         'not null' => TRUE,
         'serialize' => TRUE,
       ),
-    ) + entity_exportable_schema_fields(),
+      'status' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        // Set the default to ENTITY_CUSTOM without using the constant as it is
+        // not safe to use it at this point.
+        'default' => 0x01,
+        'size' => 'tiny',
+        'description' => 'The exportable status of the entity.',
+      ),
+      'module' => array(
+        'description' => 'The name of the providing module if the entity has been defined in code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+    ),
     'primary key' => array('itid'),
     'unique keys' => array(
       'type' => array('type'),
@@ -174,120 +189,51 @@ function invite_schema() {
  * Implements hook_install().
  */
 function invite_install() {
-  // Set default expiry time 30 days.
-  variable_set('invite_default_expiry_time', 30);
-
-  drupal_set_message(t('Thank you for installing the <a href="@url_invite" target="blank">Invite</a>.', array(
+  // TODO: Update URLs to the Backdrop version once approved.
+  backdrop_set_message(t('Thank you for installing the <a href="@url_invite" target="blank">Invite</a>.', array(
     '@url_invite' => 'https://www.drupal.org/project/invite',
   )));
 
   // Notify the user they may want to install token.
   if (!module_exists('token')) {
     $t = get_t();
-    drupal_set_message($t('If you install the <a href="!url" target="blank">Token</a>, Invite will be able to use token patterns.', array('!url' => 'http://drupal.org/project/token')));
+    backdrop_set_message($t('If you install the <a href="!url" target="blank">Token</a>, Invite will be able to use token patterns.', array('!url' => 'http://drupal.org/project/token')));
   }
+}
+/**
+ * Move Invite settings from variables to config.
+ */
+function invite_update_1000() {
+  // Migrate variables to config.
+  $config = config('invite.settings');
+  $config->set('invite_default_expiry_time', update_variable_get('invite_default_expiry_time', 30));
+  $config->set('invite_message_editable', update_variable_get('invite_message_editable', ''));
+  $config->set('invite_default_mail_subject', update_variable_get('invite_default_mail_subject', ''));
+  $config->set('invite_default_mail_body', update_variable_get('invite_default_mail_body', ''));
+  $config->set('invite_default_replace_tokens', update_variable_get('invite_default_replace_tokens', ''));
+  $config->set('invite_use_users_email_replyto', update_variable_get('invite_use_users_email_replyto', ''));
+  $config->set('invite_manual_from', update_variable_get('invite_manual_from', ''));
+  $config->set('invite_use_users_email', update_variable_get('invite_use_users_email', ''));
+  $config->set('invite_version_updated', update_variable_get('invite_version_updated', 1));
+  $config->set('invite_require_approval', update_variable_get('invite_require_approval', 0));
+  $config->save();
+
+  // Delete variables.
+  update_variable_del('invite_default_expiry_time');
+  update_variable_del('invite_message_editable');
+  update_variable_del('invite_default_mail_subject');
+  update_variable_del('invite_default_mail_body');
+  update_variable_del('invite_default_replace_tokens');
+  update_variable_del('invite_use_users_email_replyto');
+  update_variable_del('invite_manual_from');
+  update_variable_del('invite_use_users_email');
+  update_variable_del('invite_version_updated');
+  update_variable_del('invite_require_approval');
 }
 
 /**
- * Implements hook_install().
+ * Implements hook_update_last_removed().
  */
-function invite_uninstall() {
-
-  $invite_vars = array(
-    'invite_message_editable',
-    'invite_default_mail_subject',
-    'invite_default_mail_body',
-    'invite_default_replace_tokens',
-    'invite_message_editable',
-    'invite_use_users_email_replyto',
-    'invite_manual_from',
-    'invite_use_users_email',
-  );
-
-  foreach ($invite_vars as $invite_var) {
-    variable_del($invite_var);
-  }
-
-  $variables = db_select('variable', 'v')
-    ->fields('v')
-    ->condition('name', 'invite_type_%', 'LIKE')
-    ->execute();
-  foreach ($variables as $variable) {
-    variable_del($variable->name);
-  }
-}
-
-/**
- * Implements update from 2.x version to 4.x.
- */
-function invite_update_7400() {
-  db_rename_table('invite', 'invite_2x');
-  db_rename_table('invite_notifications', 'invite_notifications_2x');
-
-  // Create tables.
-  $schema = invite_schema();
-  foreach ($schema as $table_name => $specs) {
-    db_create_table($table_name, $specs);
-  }
-
-  // We unable move the data because invite_by_email should be installed.
-  // So all data transfer will be moved.
-  variable_set('invite_version_updated', TRUE);
-  variable_set('invite_default_expiry_time', 30);
-
-  drupal_set_message(t('Invite was successfully installed. You could migrate !link.', array('!link' => l(t('old invites'), 'admin/config/people/invite/migrate'))));
-}
-
-/**
- * Adding 'status' to invite table.
- */
-function invite_update_7401() {
-
-  // The status field might already exist on the invite table with incorrect
-  // settings.
-  // We need to check if the status field exists in the invite table if it does
-  // drop it.
-  // We are going to overwrite all values in the status field later in this
-  // update hook so dropping this field won't have any negative consequences.
-  if (db_field_exists('invite', 'status')) {
-    db_drop_field('invite', 'status');
-  }
-
-  // Add status field to invite table.
-  $specs = array(
-    'type' => 'int',
-    'not null' => TRUE,
-    'description' => 'Invitation status.',
-    'default' => 1,
-    'initial' => 1,
-  );
-  db_add_field('invite', 'status', $specs);
-
-  // Calculate and store invite status from existing data.
-  $invites = db_select('invite', 'i')
-    ->fields('i', array('iid', 'created', 'canceled', 'joined', 'expiry'))
-    ->execute();
-
-  foreach ($invites as $invite) {
-    // Default to Valid.
-    $status = 1;
-
-    // Withdrawn.
-    if ($invite->canceled != 0) {
-      $status = 2;
-    }
-    // Used.
-    elseif ($invite->joined != 0) {
-      $status = 3;
-    }
-    // Expired.
-    elseif ($invite->expiry < REQUEST_TIME) {
-      $status = 4;
-    }
-
-    db_update('invite')
-      ->fields(array('status' => $status))
-      ->condition('iid', $invite->iid)
-      ->execute();
-  }
+function invite_update_last_removed() {
+  return 7401;
 }

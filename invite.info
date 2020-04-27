@@ -1,11 +1,9 @@
+type = module
 name = Invite
 description = Allow users to invite others on site
-core = 7.x
 package = Invite
-
-files[] = includes/invite.controller.inc
-files[] = includes/invite.info.inc
-files[] = tests/InviteExpireTest.test
+version = VERSION
+backdrop = 1.x
 
 ; Views includes
 files[] = views/invite.views_default.inc
@@ -13,5 +11,6 @@ files[] = views/handlers/views_handler_field_invite_status.inc
 
 configure = admin/config/people/invite
 
-dependencies[] = entity
-dependencies[] = ctools
+dependencies[] = entity_plus
+dependencies[] = entity_ui
+

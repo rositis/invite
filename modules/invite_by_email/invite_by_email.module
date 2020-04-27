@@ -39,6 +39,7 @@ function invite_by_email_invite_sending_controller() {
  * Form alter.
  */
 function invite_by_email_form_invite_type_form_alter(&$form, &$form_state, $invite_type, $op = 'edit') {
+  $config =
   $invite_type = $form['#invite_type'];
   $invite_by_email_settings = !empty($invite_type->data['invite_by_email']) ? $invite_type->data['invite_by_email'] : array(
     'use_default' => TRUE,
@@ -422,4 +423,15 @@ function invite_by_email_form_user_register_form_alter(&$form, &$form_state, $fo
       $field['mail']['#default_value'] = $invite_wrapper->field_invitation_email_address->value();
     }
   }
+}
+
+/**
+ * Implements hook_config_info().
+ */
+function invite_by_email_config_info() {
+  $prefixes['invite_by_email.settings'] = array(
+    'label' => t('Invite by e-mail settings'),
+    'group' => t('Invite by e-mail'),
+  );
+  return $prefixes;
 }

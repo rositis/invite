@@ -12,19 +12,23 @@
  *   Return array with system settings form.
  */
 function invite_by_email_settings_form() {
+  // Get the full config object
+  $config = config('invite_by_email.settings');
+  $form['#config'] = 'invite_by_email.settings';
+
   $form['invite_message_editable'] = array(
     '#type' => 'checkbox',
     '#title' => t('Editable subject'),
     '#description' => t('Choose whether users should be able to customize the subject.'),
     // @codingStandardsIgnoreLine
-    '#default_value' => variable_get('invite_message_editable', FALSE),
+    '#default_value' => config_get('invite_by_email.settings','invite_message_editable'),
   );
 
   $form['invite_default_mail_subject'] = array(
     '#type' => 'textfield',
     '#title' => t('Subject'),
     // @codingStandardsIgnoreLine
-    '#default_value' => variable_get('invite_default_mail_subject', t('[invite:inviter:name] has sent you an invite!')),
+    '#default_value' => $config->get('invite_default_mail_subject'),
     '#description' => t('Type the default subject of the invitation e-mail.') . ' ' . t('Use the syntax [token] if you want to insert a replacement pattern.'),
     '#required' => TRUE,
   );
@@ -41,7 +45,7 @@ function invite_by_email_settings_form() {
     '#type' => 'textarea',
     '#title' => t('Mail template'),
     // @codingStandardsIgnoreLine
-    '#default_value' => variable_get('invite_default_mail_body', ''),
+    '#default_value' => $config->get('invite_default_mail_body'),
     '#required' => TRUE,
     '#description' => t('Use the syntax [token] if you want to insert a replacement pattern.'),
   );
@@ -50,7 +54,7 @@ function invite_by_email_settings_form() {
     '#type' => 'checkbox',
     '#title' => t('Apply token replacements'),
      // @codingStandardsIgnoreLine
-    '#default_value' => variable_get('invite_default_replace_tokens', TRUE),
+    '#default_value' => $config->get('invite_default_replace_tokens'),
     '#description' => t('Whether token replacement patterns should be applied.'),
   );
 
@@ -62,14 +66,22 @@ function invite_by_email_settings_form() {
       '#collapsed' => TRUE,
     );
 
-    $form['token_help']['help'] = array(
-      '#markup' => theme('token_tree', array(
+    try {
+      $token_help_widget = theme('token_tree', array(
         'token_types' => array(
           'user',
           'profile',
           'invite',
         ),
-      )),
+      ));
+    }
+    catch (Exception $e) {
+      // TODO: What should I put here as a default?
+      $token_help_widget = '';
+    }
+
+    $form['token_help']['help'] = array(
+      '#markup' => $token_help_widget,
     );
   }
 
@@ -79,7 +91,7 @@ function invite_by_email_settings_form() {
     '#description' => t('Choose which e-mail address will be in the From: header for the invitation mails sent; <em>site</em> or <em>inviter</em>. <em>Site</em> will use the default e-mail address of the site, whereas <em>inviter</em> will use the e-mail address of the user who is sending the invitation. Alternatively, you can set this value manually by clicking on <em>advanced settings</em> below.'),
     '#options' => array(t('Site'), t('Inviter')),
     // @codingStandardsIgnoreLine
-    '#default_value' => variable_get('invite_use_users_email', 0),
+    '#default_value' => $config->get('invite_use_users_email'),
   );
 
   $form['invite_use_users_email_replyto'] = array(
@@ -88,7 +100,7 @@ function invite_by_email_settings_form() {
     '#description' => t('Choose which e-mail address will be in the Reply-To: header for the invitation mails sent; <em>site</em> or <em>inviter</em>. <em>Site</em> will use the default e-mail address of the site, whereas <em>inviter</em> will use the e-mail address of the user who is sending the invitation. Alternatively, you can set this value manually by clicking on <em>advanced settings</em> below.'),
     '#options' => array(t('Site'), t('Inviter')),
     // @codingStandardsIgnoreLine
-    '#default_value' => variable_get('invite_use_users_email_replyto', 0),
+    '#default_value' => $config->get('invite_use_users_email_replyto'),
   );
 
   $form['advanced'] = array(
@@ -103,7 +115,7 @@ function invite_by_email_settings_form() {
     '#type' => 'textfield',
     '#title' => t('Manually override <em>From</em> e-mail address'),
     // @codingStandardsIgnoreLine
-    '#default_value' => variable_get('invite_manual_from', ''),
+    '#default_value' => $config->get('invite_manual_from'),
     '#description' => t('The e-mail address the invitation e-mail is sent from.'),
   );
 
@@ -111,7 +123,7 @@ function invite_by_email_settings_form() {
     '#type' => 'textfield',
     '#title' => t('Manually override <em>Reply-To</em> e-mail address'),
     // @codingStandardsIgnoreLine
-    '#default_value' => variable_get('invite_manual_reply_to', ''),
+    '#default_value' => $config->get('invite_manual_reply_to'),
     '#description' => t('The e-mail address you want recipients to reply to.'),
   );
 

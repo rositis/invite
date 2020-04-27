@@ -19,16 +19,7 @@ class InviteExpireTest extends DrupalWebTestCase {
     module_enable(array('invite'));
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public static function getInfo() {
-    return array(
-      'name' => 'Invite expire',
-      'description' => 'Tests the invite expire time',
-      'group' => 'Invite',
-    );
-  }
+
 
   /**
    * Tests the expire functionality of the invite module.
