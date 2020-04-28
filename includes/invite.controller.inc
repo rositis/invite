@@ -280,7 +280,8 @@ class InviteType extends Entity {
    * Implements EntityInterface::entityType().
    */
   public function entityType() {
-    return 'rules_config';
+    return 'invite_type';
+    // return 'rules_config';
   }
 
   /**
@@ -318,7 +319,7 @@ class InviteType extends Entity {
    *
    */
   public function __construct($values = array()) {
-    parent::__construct($values, 'invite_type');
+    parent::__construct($values); // removed second parameter 'invite_type'.
     if (empty($this->invite_sending_controller)) {
       $controllers = db_select('invite_sending_controller', 'isc')
         ->fields('isc')
