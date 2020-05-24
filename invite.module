@@ -888,7 +888,7 @@ function invite_target_roles($invite, $account) {
   foreach ($roles as $rid => $role) {
     // TODO: WTF? How am I supposed to do this in the settings file?
     $target = variable_get('invite_target_role_' . $rid, DRUPAL_AUTHENTICATED_RID);
-    if ($target != DRUPAL_AUTHENTICATED_RID) {
+    if ($target != BACKDROP_AUTHENTICATED_ROLE) {
       $targets[$target] = $target;
     }
   }
@@ -926,12 +926,12 @@ function invite_cron() {
  */
 function invite_autoload_info() {
   return array(
-    'InviteController' => 'includes/invite.controller.inc',
-    'InviteTypeController' => 'includes/invite.controller.inc',
-    'InviteTypeUIController' => 'includes/invite.controller.inc',
-    'Invite' => 'includes/invite.controller.inc',
-    'InviteType' => 'includes/invite.controller.inc',
-    'InviteMetadataController' => 'includes/invite.info.inc',
+    'InviteController' => 'includes/InviteController.class.inc',
+    'InviteTypeController' => 'includes/InviteTypeController.class.inc',
+    'InviteTypeUIController' => 'includes/InviteTypeUIController.class.inc',
+    'Invite' => 'includes/Invite.class.inc',
+    'InviteType' => 'includes/InviteType.class.inc',
+    'InviteMetadataController' => 'includes/InviteMetadataController.class.inc',
     'InviteExpireTest' => 'tests/InviteExpireTest.test',
   );
 }
@@ -945,4 +945,22 @@ function invite_config_info() {
     'group' => t('Invite'),
   );
   return $prefixes;
+}
+
+/**
+ * Helper function to generates a unique tracking code.
+ *
+ * @return string
+ *   An 10-digit unique tracking code.
+ */
+function _invite_generate_code() {
+  do {
+    $reg_code = user_password(10);
+    $query = 'SELECT i.reg_code
+        FROM {invite} i
+        WHERE i.reg_code = :regcode';
+    $result = (bool) db_query_range($query, 0, 1, array(':regcode' => $reg_code))->fetchField();
+  } while ($result);
+
+  return $reg_code;
 }

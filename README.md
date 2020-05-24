@@ -39,8 +39,8 @@ Current Maintainers
 Credits
 -------------------
 Backdrop CMS Port:
-* [Alan Mels](https://github.com/alanmels) - 1.x-2.x branch
-* [Ryan Osītis](https://github.com/rositis) - 1.x-4.x branch
+* [Alan Mels](https://github.com/alanmels) - 1.x-1.x branch
+* [Ryan Osītis](https://github.com/rositis) - 1.x-2.x branch
 
 Original Drupal Version:
 * [Stefan Kudwien (smk-ka)](https://www.drupal.org/user/48898)
