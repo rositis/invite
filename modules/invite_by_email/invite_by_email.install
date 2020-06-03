@@ -9,76 +9,10 @@
  * Implements hook_install().
  */
 function invite_by_email_install() {
-  invite_by_email_add_fields();
-}
-
-/**
- * Implements hook_enable().
- */
-function invite_by_email_enable() {
-
-  $types = array(
-    array(
-      'type' => 'invite_by_email',
-      'module' => 'invite_by_email',
-      'invite_sending_controller' => array(
-        'invite_by_email' => 'invite_by_email',
-      ),
-      'label' => st('Invite by e-mail'),
-      'description' => st('Invitation by e-mail.'),
-    ),
-  );
-
-  foreach ($types as $type) {
-    $invite_by_email = entity_load('invite_type', FALSE, array('type' => 'invite_by_email'));
-    if (empty($invite_by_email)) {
-      $invite_type = entity_create('invite_type', $type);
-      if ($invite_type) {
-        $invite_type->invite_sending_controller = $type['invite_sending_controller'];
-        entity_plus_save('invite_type', $invite_type);
-      }
-    }
-  }
-}
-
-
-/**
- * Implements hook_uninstall().
- */
-function invite_by_email_uninstall() {
-
-  if (function_exists('invite_type_load')) {
-    $invite_type = invite_type_load('invite_by_email');
-    invite_type_delete($invite_type);
-  }
-
-  db_delete('invite_sending_controller')
-    ->condition('name', 'invite_by_email')
-    ->execute();
-
-  $fields = array(
-    'field_invitation_email_address',
-    'field_invitation_email_subject',
-    'field_invitation_email_body',
-  );
-
-  foreach ($fields as $field) {
-    field_delete_field($field);
-  }
-
-  db_delete('field_config_instance')
-    ->condition('bundle', 'invite_by_email')
-    ->execute();
-
-  backdrop_cron_run();
-}
-
-/**
- * Add fields.
- */
-function invite_by_email_add_fields() {
   // Get the full config object
   $config = config('invite_by_email.settings');
+
+  // Add the fields.
   $fields = array(
     'field_invitation_email_address' => array(
       'definition' => array(
@@ -194,6 +128,67 @@ function invite_by_email_add_fields() {
       }
     }
   }
+}
+
+/**
+ * Implements hook_enable().
+ */
+function invite_by_email_enable() {
+
+  $types = array(
+    array(
+      'type' => 'invite_by_email',
+      'module' => 'invite_by_email',
+      'invite_sending_controller' => array(
+        'invite_by_email' => 'invite_by_email',
+      ),
+      'label' => st('Invite by e-mail'),
+      'description' => st('Invitation by e-mail.'),
+    ),
+  );
+
+  foreach ($types as $type) {
+    $invite_by_email = entity_load('invite_type', FALSE, array('type' => 'invite_by_email'));
+    if (empty($invite_by_email)) {
+      $invite_type = entity_create('invite_type', $type);
+      if ($invite_type) {
+        $invite_type->invite_sending_controller = $type['invite_sending_controller'];
+        entity_plus_save('invite_type', $invite_type);
+      }
+    }
+  }
+}
+
+
+/**
+ * Implements hook_uninstall().
+ */
+function invite_by_email_uninstall() {
+
+  if (function_exists('invite_type_load')) {
+    $invite_type = invite_type_load('invite_by_email');
+    invite_type_delete($invite_type);
+  }
+
+  db_delete('invite_sending_controller')
+    ->condition('name', 'invite_by_email')
+    ->execute();
+
+  $fields = array(
+    'field_invitation_email_address',
+    'field_invitation_email_subject',
+    'field_invitation_email_body',
+  );
+
+  foreach ($fields as $field) {
+    field_delete_field($field);
+  }
+
+  db_delete('field_config_instance')
+    ->condition('bundle', 'invite_by_email')
+    ->execute();
+
+  backdrop_cron_run();
 }
 
 /**
