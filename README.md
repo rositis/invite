@@ -21,7 +21,6 @@ Navigate  **Configuration » People » Invite** to check the default configurati
 
 Documentation
 -------------
-
 Additional documentation is located in the Wiki:
 https://github.com/backdrop-contrib/invite/wiki/Documentation.
 
