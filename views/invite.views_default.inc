@@ -26,5 +26,5 @@ function invite_views_default_views() {
 /**
  * Invite entity Views definition.
  */
-class InviteViewsController extends EntityDefaultViewsController {
+class InviteViewsController extends EntityPlusDefaultViewsController {
 }
