@@ -23,16 +23,25 @@ class InviteExpireTest extends DrupalWebTestCase {
 
   /**
    * Tests the expire functionality of the invite module.
+   *
+   * TODO: HOW TO FAIL?
    */
   public function testExpire() {
-    // Setup an expire time of 3 weeks.
-    // The idea of this test is to fake the expire time to - 3weeks to ensure
+    // Set up an expiration time of 3 weeks.
+    // The idea of this test is to fake the expiration time to - 3weeks to ensure
     // that the expire logic works.
-    variable_set('invite_default_expiry_time', 21);
+    $config = config('invite.settings');
+    $config->set('invite_default_expiry_time', 21);
 
     $invite_type = entity_create('invite_type', array('label' => 'Test invite type', 'type' => 'test_type'));
-    entity_save('invite_type', $invite_type);
-    drupal_static_reset('checkPermissions');
+    try {
+      $invite_type->save();
+    }
+    catch (Exception $e) {
+      // TODO: Handle exception
+    }
+
+    backdrop_static_reset('checkPermissions');
 
     $inviter = $this->drupalCreateUser(array('create test_type entity'));
     $invitee = $this->drupalCreateUser(array());
@@ -46,7 +55,13 @@ class InviteExpireTest extends DrupalWebTestCase {
     // If the expire checking works correctly, we expect the invitation to be
     // expired.
     $invite->expiry -= 3 * 7 * 24 * 3600;
-    entity_save('invite', $invite);
+    try {
+      $invite->save();
+    }
+    catch (Exception $e) {
+      // TODO: Handle exception
+    }
+
     sleep(1);
 
     $this->drupalLogin($invitee);
@@ -57,7 +72,12 @@ class InviteExpireTest extends DrupalWebTestCase {
     // Change back the expiry date to the future. Now we expect it to be valid
     // again.
     $invite->expiry += 3 * 7 * 24 * 3600;
-    entity_save('invite', $invite);
+    try {
+      $invite->save();
+    }
+    catch (Exception $e) {
+      // TODO: Handle exception
+    }
 
     $this->drupalGet('invite/accept/' . $invite->reg_code);
     $this->assertText(sprintf('You have accepted the invitation from %s.', $inviter->name));

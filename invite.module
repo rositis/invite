@@ -4,17 +4,17 @@
  * @file
  */
 
-define('INVITE_SESSION_CODE', 'invite_code');
-define('INVITE_SESSION_FAILED', 'invite_failed');
-define('INVITE_SESSION_ADMIN', 'invite_admin_filter');
+const INVITE_SESSION_CODE = 'invite_code';
+const INVITE_SESSION_FAILED = 'invite_failed';
+const INVITE_SESSION_ADMIN = 'invite_admin_filter';
 
 /**
  * Validity constants.
  */
-define('INVITE_VALID', 1);
-define('INVITE_WITHDRAWN', 2);
-define('INVITE_USED', 3);
-define('INVITE_EXPIRED', 4);
+const INVITE_VALID = 1;
+const INVITE_WITHDRAWN = 2;
+const INVITE_USED = 3;
+const INVITE_EXPIRED = 4;
 
 // @TODO
 // - "canceled" is obsolete with "status", remove it.
@@ -178,7 +178,7 @@ function invite_menu() {
 
   $items[$invite_uri . '/edit'] = array(
     'title' => 'Edit',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('invite_form', $invite_uri_argument_position),
     'access callback' => 'entity_access',
     'access arguments' => array('edit', 'invite', $invite_uri_argument_position),
@@ -202,7 +202,7 @@ function invite_menu() {
   $items['admin/config/people/invite'] = array(
     'title' => 'Invite',
     'description' => 'Modify invitation settings.',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('invite_settings_form'),
     'access arguments' => array('administer invitations'),
     'type' => MENU_NORMAL_ITEM,
@@ -240,7 +240,7 @@ function invite_menu() {
   );
 
   $items['invite/withdraw/%invite_by_code'] = array(
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('invite_withdraw_form', 2),
     'access callback' => 'invite_withdraw_access',
     'access arguments' => array(2),
@@ -262,7 +262,7 @@ function invite_menu() {
     $items['admin/config/people/invite/migrate'] = array(
       'title' => 'Migrate',
       'description' => 'Migrate version 2.x invites.',
-      'page callback' => 'drupal_get_form',
+      'page callback' => 'backdrop_get_form',
       'page arguments' => array('invite_migrate_form'),
       'access arguments' => array('administer invitations'),
       'type' => MENU_LOCAL_TASK,
@@ -418,7 +418,7 @@ function invite_withdraw_access($invite) {
   global $user;
 
   if ($invite->status == INVITE_WITHDRAWN) {
-    drupal_set_message(t('The invitation has already been withdrawn.'), 'error');
+    backdrop_set_message(t('The invitation has already been withdrawn.'), 'error');
     return FALSE;
   }
 
@@ -758,7 +758,7 @@ function invite_type_delete_multiple($invite_type_ids) {
 function invite_views_api() {
   return array(
     'api' => '3.0',
-    'path' => drupal_get_path('module', 'invite') . '/views',
+    'path' => backdrop_get_path('module', 'invite') . '/views',
   );
 }
 
@@ -866,7 +866,7 @@ function invite_user_presave(&$edit, $account, $category) {
  * Determine target roles based on the roles of an inviter.
  *
  * @param Invite $invite
- *   An invite object.
+ *   An invitation object.
  * @param $account
  *   The user for whom the role is being determined.
  *
@@ -875,11 +875,14 @@ function invite_user_presave(&$edit, $account, $category) {
  */
 function invite_target_roles($invite, $account) {
   $targets = array();
+  $config = config('invite.settings');
 
   $invite = entity_metadata_wrapper('invite', $invite);
   $inviter = user_load($invite->inviter->uid->value());
   // Add roles of inviter.
   $roles = array_intersect($inviter->roles, user_roles(TRUE, 'send invitations'));
+
+  dpm($roles); // Should be an associative array with machine name => label
 
   // Add a dummy entry to retrieve the default target role setting.
   $roles['default'] = 'default';
@@ -887,8 +890,9 @@ function invite_target_roles($invite, $account) {
   // Map to configured target roles.
   foreach ($roles as $rid => $role) {
     // TODO: WTF? How am I supposed to do this in the settings file?
-    $target = variable_get('invite_target_role_' . $rid, DRUPAL_AUTHENTICATED_RID);
-    if ($target != DRUPAL_AUTHENTICATED_RID) {
+    // Well, you do it in the .install file.
+    $target = $config->get('invite_target_role_' . $rid, BACKDROP_AUTHENTICATED_ROLE);
+    if ($target != BACKDROP_AUTHENTICATED_ROLE) {
       $targets[$target] = $target;
     }
   }
